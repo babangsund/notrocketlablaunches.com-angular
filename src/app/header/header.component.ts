@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, HostBinding } from '@angular/core';
 import { Observable, combineLatest, map } from 'rxjs';
 import { SimulatorService } from '../services/simulator/simulator.service';
+import { getAppVersion } from '../utils/getAppVersion';
 
 @Component({
     selector: 'app-header',
@@ -26,7 +27,7 @@ export class HeaderComponent {
         );
     }
 
-    appVersion = '0.0.1';
+    appVersion = getAppVersion();
 
     missionStatus$: Observable<string>;
 
