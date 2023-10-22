@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, map } from 'rxjs';
-import { MissionSummary } from 'src/app/model/mission.model';
-import { PerfStatsService } from 'src/app/perf-stats/perf-stats.service';
+import { MissionSummary } from 'src/app/data/data.model';
+import { PerfStatsService } from 'src/app/services/perf-stats/perf-stats.service';
 import {
     SimulatorCompleteEvent,
     StartOffscreenCanvasWorkerEvent,
     StartSimulatorConsumerEvent,
 } from 'src/app/services/simulator/simulator.model';
+
+import { DEFAULT_MISSION_PLAYBACK_SPEED, DEFAULT_MISSION_SUMMARY } from 'src/app/constants';
 
 @Injectable({
     providedIn: 'root',
@@ -35,13 +37,13 @@ export class SimulatorService {
 
     private _worker: Worker;
 
-    private _missionSummary = new BehaviorSubject<MissionSummary | null>(null);
+    private _missionSummary = new BehaviorSubject<MissionSummary | null>(DEFAULT_MISSION_SUMMARY);
 
     private _missionIsRunning = new BehaviorSubject(false);
 
     private _missionIsCompleted = new BehaviorSubject(false);
 
-    private _missionPlaybackSpeed = new BehaviorSubject(10);
+    private _missionPlaybackSpeed = new BehaviorSubject(DEFAULT_MISSION_PLAYBACK_SPEED);
 
     public readonly missionId$ = this._missionSummary.pipe(map((ms) => ms?.missionId ?? null));
 
@@ -78,6 +80,10 @@ export class SimulatorService {
     public set missionPlaybackSpeed$(missionPlaybackSpeed: number) {
         this._worker.postMessage({ type: 'mission-playback-speed', missionPlaybackSpeed });
         this._missionPlaybackSpeed.next(missionPlaybackSpeed);
+    }
+
+    public toggleMissionRunning() {
+        this.missionIsRunning$ = !this._missionIsRunning.getValue();
     }
 
     public startOffscreenCanvasWorker({

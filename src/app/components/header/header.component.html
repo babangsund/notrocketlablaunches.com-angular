@@ -10,8 +10,9 @@
     <div class="flex-center">
         <span>Playback speed:</span>
         <select
+            [disabled]="_simulatorService.missionIsCompleted$ | async"
             [value]="_simulatorService.missionPlaybackSpeed$ | async"
-            (change)="handleChangeMissionPlaybackSpeed()"
+            (change)="handleChangeMissionPlaybackSpeed($event)"
         >
             <option value="1">1x</option>
             <option value="2">2x</option>

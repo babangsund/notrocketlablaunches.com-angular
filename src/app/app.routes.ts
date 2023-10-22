@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { LaunchComponent } from './launch/launch.component';
+import { LaunchComponent } from './components/launch/launch.component';
 
 export const routes: Routes = [
     {

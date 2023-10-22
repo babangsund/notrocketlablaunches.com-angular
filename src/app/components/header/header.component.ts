@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostBinding } from '@angular/core';
 import { Observable, combineLatest, map } from 'rxjs';
-import { SimulatorService } from '../services/simulator/simulator.service';
-import { getAppVersion } from '../utils/getAppVersion';
+import { PerfStatsService } from 'src/app/services/perf-stats/perf-stats.service';
+import { SimulatorService } from '../../services/simulator/simulator.service';
+import { getAppVersion } from '../../utils/getAppVersion';
 
 @Component({
     selector: 'app-header',
@@ -12,9 +13,11 @@ import { getAppVersion } from '../utils/getAppVersion';
     styleUrls: ['./header.component.scss'],
 })
 export class HeaderComponent {
+    _perfStatsService: PerfStatsService;
     _simulatorService: SimulatorService;
 
-    constructor(simulatorService: SimulatorService) {
+    constructor(perfStatsService: PerfStatsService, simulatorService: SimulatorService) {
+        this._perfStatsService = perfStatsService;
         this._simulatorService = simulatorService;
 
         this.missionStatus$ = combineLatest(
@@ -37,14 +40,15 @@ export class HeaderComponent {
     }
 
     handleClickDeveloperStats() {
-        console.log('handleClickDeveloperStats');
+        this._perfStatsService.showPerfStats$ = true;
     }
 
     handleClickMissionStatus() {
-        console.log('handleClickMissionStatus');
+        this._simulatorService.toggleMissionRunning();
     }
 
-    handleChangeMissionPlaybackSpeed() {
-        console.log('handleChangeMissionPlaybackSpeed');
+    handleChangeMissionPlaybackSpeed(evt: Event) {
+        const missionPlaybackSpeed = parseInt((evt.target as HTMLSelectElement).value);
+        this._simulatorService.missionPlaybackSpeed$ = missionPlaybackSpeed;
     }
 }

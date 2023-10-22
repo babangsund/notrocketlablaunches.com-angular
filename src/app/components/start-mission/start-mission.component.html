@@ -1,0 +1,49 @@
+<app-modal
+    *ngIf="
+        missionStarted === false && (_simulatorService.missionSummary$ | async) as missionSummary
+    "
+>
+    <div class="flex-col container">
+        <h1>Welcome to (not) Rocket Lab Launches! (alpha {{ appVersion }})</h1>
+
+        <ul>
+            <li>Rocket telemetry is generated at a <strong>100Hz</strong> rate.</li>
+            <li>Click "Developer Stats" to see how the app is performing.</li>
+            <li>Zoom in/out on the map.</li>
+        </ul>
+
+        <div class="row">
+            <div class="col">
+                <p class="key-value-pair">
+                    <span class="key">Mission Name:</span>
+                    <strong>{{ missionSummary?.missionName }}</strong>
+                </p>
+
+                <p class="key-value-pair">
+                    <span class="key">Rocket Model:</span>
+                    <strong>{{ missionSummary?.rocketModel }}</strong>
+                </p>
+                <p class="key-value-pair">
+                    <span class="key">Rocket Name:</span>
+                    <strong>{{ missionSummary?.rocketName }}</strong>
+                </p>
+            </div>
+            <div class="col">
+                <p class="key-value-pair">
+                    <span class="key">Launch Date:</span>
+                    <strong>{{ (launchTimeAsDate | async)?.toLocaleDateString() }}</strong>
+                </p>
+                <p class="key-value-pair">
+                    <span class="key">Launch Time:</span>
+                    <strong>{{ (launchTimeAsDate | async)?.toLocaleTimeString() }}</strong>
+                </p>
+                <p class="key-value-pair">
+                    <span class="key">Launch Site:</span>
+                    <strong>{{ missionSummary?.launchSiteName }}</strong>
+                </p>
+            </div>
+        </div>
+
+        <button (click)="handleStartMission()" class="start-mission">Start mission</button>
+    </div>
+</app-modal>

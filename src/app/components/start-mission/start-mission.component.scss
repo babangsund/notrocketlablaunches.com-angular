@@ -1,0 +1,51 @@
+.start-mission {
+    margin: 0 auto;
+    width: calc(var(--multiplier) * 24);
+}
+
+ul {
+    margin: 0;
+    padding-left: calc(var(--multiplier) * 2);
+}
+
+.row {
+    display: flex;
+    gap: calc(var(--multiplier) * 4);
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--multiplier);
+}
+
+.key-value-pair {
+    margin: 0;
+}
+
+.key {
+    display: inline-block;
+    width: calc(var(--multiplier) * 4);
+    min-width: calc(var(--multiplier) * 20);
+}
+
+h1,
+h2,
+h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--multiplier) * 3);
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    border: var(--border);
+    padding: calc(var(--multiplier) * 2);
+    background-color: var(--background-color);
+}

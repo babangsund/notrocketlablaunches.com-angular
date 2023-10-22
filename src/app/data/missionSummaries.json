@@ -1,0 +1,10 @@
+{
+    "strongerTogether": {
+        "missionId": "strongerTogether",
+        "missionName": "Stronger Together",
+        "rocketModel": "Electron",
+        "rocketName": "Stronger Together",
+        "launchDateMs": 1679006280000,
+        "launchSiteName": "Launch Complex 2"
+    }
+}
