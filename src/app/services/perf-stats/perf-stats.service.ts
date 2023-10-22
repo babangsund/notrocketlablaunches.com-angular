@@ -16,8 +16,8 @@ export class PerfStatsService {
         return this._showPerfStats.asObservable();
     }
 
-    public set showPerfStats$(showPerfStats: boolean) {
-        this._showPerfStats.next(showPerfStats);
+    public toggleShowPerfStats() {
+        this._showPerfStats.next(!this._showPerfStats.getValue());
     }
 
     public get workerFps$(): Observable<Record<WorkerId, number>> {

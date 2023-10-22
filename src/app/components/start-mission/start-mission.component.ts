@@ -39,6 +39,6 @@ export class StartMissionComponent {
      */
     handleStartMission() {
         this.missionStarted = true;
-        this._simulatorService.missionIsRunning$ = true;
+        this._simulatorService.toggleMissionRunning();
     }
 }

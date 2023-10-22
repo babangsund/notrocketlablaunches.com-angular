@@ -40,7 +40,7 @@ export class HeaderComponent {
     }
 
     handleClickDeveloperStats() {
-        this._perfStatsService.showPerfStats$ = true;
+        this._perfStatsService.toggleShowPerfStats();
     }
 
     handleClickMissionStatus() {
@@ -49,6 +49,6 @@ export class HeaderComponent {
 
     handleChangeMissionPlaybackSpeed(evt: Event) {
         const missionPlaybackSpeed = parseInt((evt.target as HTMLSelectElement).value);
-        this._simulatorService.missionPlaybackSpeed$ = missionPlaybackSpeed;
+        this._simulatorService.setMissionPlaybackSpeed(missionPlaybackSpeed);
     }
 }

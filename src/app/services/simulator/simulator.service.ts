@@ -27,8 +27,8 @@ export class SimulatorService {
         this._worker.addEventListener('message', (evt: MessageEvent<SimulatorCompleteEvent>) => {
             switch (evt.data.type) {
                 case 'simulator-complete': {
-                    this.missionIsRunning$ = false;
-                    this.missionIsCompleted$ = true;
+                    this._missionIsRunning.next(false);
+                    this._missionIsCompleted.next(true);
                     break;
                 }
             }
@@ -51,39 +51,36 @@ export class SimulatorService {
         return this._missionSummary.asObservable();
     }
 
-    public set missionSummary$(missionSummary: MissionSummary) {
-        this._worker.postMessage({ type: 'set-mission', missionId: missionSummary.missionId });
-        this._missionSummary.next(missionSummary);
-    }
-
     public get missionIsRunning$(): Observable<boolean> {
         return this._missionIsRunning.asObservable();
-    }
-
-    public set missionIsRunning$(missionIsRunning: boolean) {
-        this._worker.postMessage({ type: missionIsRunning ? 'start-mission' : 'stop-mission' });
-        this._missionIsRunning.next(missionIsRunning);
     }
 
     public get missionIsCompleted$(): Observable<boolean> {
         return this._missionIsCompleted.asObservable();
     }
 
-    public set missionIsCompleted$(missionIsCompleted: boolean) {
-        this._missionIsCompleted.next(missionIsCompleted);
-    }
-
     public get missionPlaybackSpeed$(): Observable<number> {
         return this._missionPlaybackSpeed.asObservable();
     }
 
-    public set missionPlaybackSpeed$(missionPlaybackSpeed: number) {
-        this._worker.postMessage({ type: 'mission-playback-speed', missionPlaybackSpeed });
-        this._missionPlaybackSpeed.next(missionPlaybackSpeed);
+    public setMissionIsCompleted(missionIsCompleted: boolean) {
+        this._missionIsCompleted.next(missionIsCompleted);
     }
 
     public toggleMissionRunning() {
-        this.missionIsRunning$ = !this._missionIsRunning.getValue();
+        const missionIsRunning = !this._missionIsRunning.getValue();
+        this._missionIsRunning.next(missionIsRunning);
+        this._worker.postMessage({ type: missionIsRunning ? 'start-mission' : 'stop-mission' });
+    }
+
+    public setMissionSummary(missionSummary: MissionSummary): void {
+        this._missionSummary.next(missionSummary);
+        this._worker.postMessage({ type: 'set-mission', missionId: missionSummary.missionId });
+    }
+
+    public setMissionPlaybackSpeed(missionPlaybackSpeed: number) {
+        this._missionPlaybackSpeed.next(missionPlaybackSpeed);
+        this._worker.postMessage({ type: 'mission-playback-speed', missionPlaybackSpeed });
     }
 
     public startOffscreenCanvasWorker({
