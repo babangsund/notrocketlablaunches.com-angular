@@ -4,12 +4,15 @@
     <div class="flex-center">
         <span>Status:</span>
         <button (click)="handleClickMissionStatus()" clickable>
-            {{ missionStatus }}
+            {{ missionStatus$ | async }}
         </button>
     </div>
     <div class="flex-center">
         <span>Playback speed:</span>
-        <select [value]="missionPlaybackSpeed" (change)="handleChangeMissionPlaybackSpeed()">
+        <select
+            [value]="_simulatorService.missionPlaybackSpeed$ | async"
+            (change)="handleChangeMissionPlaybackSpeed()"
+        >
             <option value="1">1x</option>
             <option value="2">2x</option>
             <option value="5">5x</option>
@@ -20,7 +23,7 @@
 <div class="flex-center group right">
     <div class="flex-center">
         <span>Mission:</span>
-        <strong>{{ missionSummary.missionName || '' }}</strong>
+        <strong>{{ (_simulatorService.missionSummary$ | async)?.missionName ?? '' }}</strong>
     </div>
     <div class="flex-center">
         <span>Version:</span>

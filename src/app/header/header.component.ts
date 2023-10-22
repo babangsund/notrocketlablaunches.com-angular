@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostBinding } from '@angular/core';
+import { Observable, combineLatest, map } from 'rxjs';
+import { SimulatorService } from '../services/simulator/simulator.service';
 
 @Component({
     selector: 'app-header',
@@ -9,6 +11,25 @@ import { Component, HostBinding } from '@angular/core';
     styleUrls: ['./header.component.scss'],
 })
 export class HeaderComponent {
+    _simulatorService: SimulatorService;
+
+    constructor(simulatorService: SimulatorService) {
+        this._simulatorService = simulatorService;
+
+        this.missionStatus$ = combineLatest(
+            this._simulatorService.missionIsCompleted$,
+            this._simulatorService.missionIsRunning$
+        ).pipe(
+            map(([missionIsCompleted, missionIsRunning]) =>
+                missionIsCompleted ? 'Completed' : missionIsRunning ? 'Running' : 'Paused'
+            )
+        );
+    }
+
+    appVersion = '0.0.1';
+
+    missionStatus$: Observable<string>;
+
     @HostBinding('attr.role')
     get role() {
         return 'banner';
@@ -25,12 +46,4 @@ export class HeaderComponent {
     handleChangeMissionPlaybackSpeed() {
         console.log('handleChangeMissionPlaybackSpeed');
     }
-
-    appVersion = '0.0.1';
-
-    missionStatus = 'Running';
-
-    missionSummary = { missionName: 'Stronger Together' };
-
-    missionPlaybackSpeed = 10;
 }
