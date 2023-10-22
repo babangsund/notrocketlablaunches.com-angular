@@ -1,0 +1,31 @@
+:host {
+    top: 0;
+    position: sticky;
+    z-index: var(--z-index-header);
+    display: flex;
+    align-items: center;
+    height: var(--app-header-height);
+    padding: calc(var(--multiplier) * 2);
+    border-bottom: var(--border);
+    background-color: var(--background-color);
+    font-size: 0.875rem;
+}
+
+.logo {
+    height: 100%;
+    margin-right: calc(var(--multiplier) * 8);
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    gap: var(--multiplier);
+}
+
+.group {
+    gap: calc(var(--multiplier) * 4);
+}
+
+.right {
+    margin-left: auto;
+}

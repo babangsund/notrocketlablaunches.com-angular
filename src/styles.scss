@@ -24,7 +24,7 @@
 
 :root {
     // Variables
-    --multiplier: 6;
+    --multiplier: 6px;
     --theme-color: #e12726;
     --color: rgb(255 255 255 / 100%);
     --font-family: 'colfax', sans-serif;
@@ -34,6 +34,9 @@
     --background-color-dark: #000;
     --border: 1px solid var(--border-color);
     --transition-opacity: opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+    --z-index-header: 999;
+    --z-index-modal: 1000;
+    --app-header-height: calc(var(--multiplier) * 9);
 
     // Color
 
@@ -74,4 +77,30 @@ body {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+}
+
+button {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 2px;
+    background-color: #222;
+    border: 1px solid #555;
+
+    &:hover,
+    &:focus {
+        background-color: #333;
+    }
+}
+
+select {
+    cursor: pointer;
+    padding: 3px 4px;
+    border-radius: 2px;
+    background-color: #222;
+    border: 1px solid #555;
+
+    &:hover,
+    &:focus {
+        background-color: #333;
+    }
 }

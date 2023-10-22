@@ -1,0 +1,30 @@
+<img src="/assets/images/logo.svg" class="logo" alt="logo" />
+
+<div class="flex-center group">
+    <div class="flex-center">
+        <span>Status:</span>
+        <button (click)="handleClickMissionStatus()" clickable>
+            {{ missionStatus }}
+        </button>
+    </div>
+    <div class="flex-center">
+        <span>Playback speed:</span>
+        <select [value]="missionPlaybackSpeed" (change)="handleChangeMissionPlaybackSpeed()">
+            <option value="1">1x</option>
+            <option value="2">2x</option>
+            <option value="5">5x</option>
+            <option value="10">10x</option>
+        </select>
+    </div>
+</div>
+<div class="flex-center group right">
+    <div class="flex-center">
+        <span>Mission:</span>
+        <strong>{{ missionSummary.missionName || '' }}</strong>
+    </div>
+    <div class="flex-center">
+        <span>Version:</span>
+        <strong>{{ appVersion }}</strong>
+    </div>
+    <button (click)="handleClickDeveloperStats()">Developer Stats</button>
+</div>
