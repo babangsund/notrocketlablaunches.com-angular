@@ -1,5 +1,6 @@
 {
   "name": "notrocketlablaunches.com-angular",
+  "author": "babangsund",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
