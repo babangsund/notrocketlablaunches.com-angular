@@ -1,0 +1,27 @@
+<header>
+    <h3>Map</h3>
+    <span *ngIf="(perfStatsService.showPerfStats$ | async) === true" class="fps">
+        FPS: {{ fps$ | async }}
+    </span>
+</header>
+
+<div class="zoom-buttons">
+    <button class="icon-button" (click)="handleZoomIn()">
+        <img src="/assets/images/icons/plus.svg" alt="Plus" />
+    </button>
+    <button class="icon-button" (click)="handleZoomOut()">
+        <img src="/assets/images/icons/minus.svg" alt="Minus" />
+    </button>
+</div>
+
+<main>
+    <canvas
+        #canvas
+        appSimulatorSubscriber
+        [id]="id"
+        [hz]="hz"
+        [worker]="worker"
+        [listeners]="[startWheelListener]"
+        [missionDataProperties]="missionDataProperties"
+    ></canvas>
+</main>

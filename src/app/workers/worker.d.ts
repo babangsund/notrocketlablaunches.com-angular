@@ -7,6 +7,10 @@ declare global {
          */
         add(font: FontFace): void;
     }
+
+    interface WebGLRenderingContext {
+        canvas: OffscreenCanvas;
+    }
 }
 
 export {};
