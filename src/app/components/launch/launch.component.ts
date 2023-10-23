@@ -11,7 +11,7 @@ import { Timeline2dComponent } from '../timeline2d/timeline2d.component';
 })
 export class LaunchComponent {
     @HostBinding('attr.role')
-    public get role() {
+    public get role(): string {
         return 'main';
     }
 }

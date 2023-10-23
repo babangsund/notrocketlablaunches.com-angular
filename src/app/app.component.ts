@@ -19,5 +19,5 @@ import { StartMissionComponent } from './components/start-mission/start-mission.
     styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
-    title = '(not) Rocket Lab Launches';
+    public title = '(not) Rocket Lab Launches';
 }

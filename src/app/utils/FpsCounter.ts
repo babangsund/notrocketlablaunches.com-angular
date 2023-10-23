@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 
 export class FpsCounter {
-    private _fps = new BehaviorSubject(0);
+    private readonly _fps = new BehaviorSubject(0);
     private _lastTimestamp = 0;
     private _frameCount = 0;
     private _frame = 0;
@@ -11,7 +11,7 @@ export class FpsCounter {
     }
 
     public start(): void {
-        this._frame = requestAnimationFrame(this.updateFPS);
+        this._frame = requestAnimationFrame(this._updateFps);
     }
 
     public stop(): void {
@@ -19,7 +19,7 @@ export class FpsCounter {
         this._fps.next(0);
     }
 
-    private readonly updateFPS = (timestamp: DOMHighResTimeStamp): void => {
+    private readonly _updateFps = (timestamp: DOMHighResTimeStamp): void => {
         if (this._lastTimestamp) {
             this._frameCount++;
             const elapsed = timestamp - this._lastTimestamp;
@@ -32,6 +32,6 @@ export class FpsCounter {
         } else {
             this._lastTimestamp = timestamp;
         }
-        this._frame = requestAnimationFrame(this.updateFPS);
+        this._frame = requestAnimationFrame(this._updateFps);
     };
 }

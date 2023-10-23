@@ -17,79 +17,84 @@ interface MissionEventsSegment {
 }
 
 export class Timeline2d {
-    private static fontFaceSet = loadFontFaceSet(self.fonts, ['colfax', 'blenderpro']);
+    private static readonly _fontFaceSet = loadFontFaceSet(self.fonts, ['colfax', 'blenderpro']);
     /**
-     * FPS of environment. Used for animating over time.
+     * FPS of the environment. Used for animating over time.
      */
-    private fps = 0;
+    private _fps = 0;
     /**
-     * mission
+     * Time since the mission started in seconds.
      */
-    private missionTimeSec = 0;
+    private _missionTimeSec = 0;
     /**
-     *
+     * Events from the mission (i.e. MECO-1)
      */
-    private missionEvents: MissionEvents = [];
+    private _missionEvents: MissionEvents = [];
     /**
-     *
+     * The offscreen canvas.
      */
-    private offscreenCanvas: OffscreenCanvas | null = null;
+    private _offscreenCanvas: OffscreenCanvas | null = null;
     /**
-     *
+     * All the data that has been collected from the simulator.
      */
-    private storedData: BatchedData = {};
+    private _storedData: BatchedData = {};
     /**
-     *
+     * Current animation frame
      */
-    private frame: number | null = null;
+    private _frame: number | null = null;
     /**
-     *
+     * Device pixel ratio
      */
-    private dpr = 1;
-
-    private canvasWidth = 0;
-    private canvasHeight = 0;
+    private _dpr = 1;
+    /**
+     * Actual canvas width (divided by dpr)
+     */
+    private _canvasWidth = 0;
+    /**
+     * Actual canvas height (divided by dpr)
+     */
+    private _canvasHeight = 0;
 
     public updateFps = (fps: number): void => {
-        this.fps = fps;
+        this._fps = fps;
     };
 
     public resize({ width, height }: ResizeEvent): void {
-        if (this.offscreenCanvas) {
-            this.offscreenCanvas.width = width;
-            this.offscreenCanvas.height = height;
-            const ctx = this.offscreenCanvas?.getContext('2d');
+        if (this._offscreenCanvas) {
+            this._offscreenCanvas.width = width;
+            this._offscreenCanvas.height = height;
+            const ctx = this._offscreenCanvas?.getContext('2d');
             if (!ctx) return;
             ctx.scale(2, 2);
-            this.canvasWidth = ctx.canvas.width / this.dpr;
-            this.canvasHeight = ctx.canvas.height / this.dpr;
+            this._canvasWidth = ctx.canvas.width / this._dpr;
+            this._canvasHeight = ctx.canvas.height / this._dpr;
         }
     }
 
-    private currentTranslation = 0;
-    private targetTranslation = 0;
+    private _currentTranslation = 0;
+    private _targetTranslation = 0;
 
-    private pastIndex = 0;
+    private _pastIndex = 0;
 
     public start(evt: StartEvent): void {
         void this._start(evt);
     }
 
     private async _start({ dpr, port, offscreenCanvas }: StartEvent): Promise<void> {
-        await Timeline2d.fontFaceSet;
-        this.dpr = dpr;
-        this.offscreenCanvas = offscreenCanvas;
+        await Timeline2d._fontFaceSet;
+        this._dpr = dpr;
+        this._offscreenCanvas = offscreenCanvas;
         const ctx = offscreenCanvas?.getContext('2d');
         if (ctx) {
             ctx.scale(dpr, dpr);
 
-            this.canvasWidth = ctx.canvas.width / this.dpr;
-            this.canvasHeight = ctx.canvas.height / this.dpr;
+            this._canvasWidth = ctx.canvas.width / this._dpr;
+            this._canvasHeight = ctx.canvas.height / this._dpr;
 
             const onPortMessage = (evt: MessageEvent<FromSimulatorToSubscriberEvent>): void => {
-                if (isInitialDataEvent(evt)) this.missionEvents = evt.data.missionEvents;
+                if (isInitialDataEvent(evt)) this._missionEvents = evt.data.missionEvents;
 
-                this.missionTimeSec = evt.data.missionTimeSec;
+                this._missionTimeSec = evt.data.missionTimeSec;
 
                 const allData = isInitialDataEvent(evt)
                     ? evt.data.initialData
@@ -100,71 +105,71 @@ export class Timeline2d {
                 Object.entries(allData).forEach(([key, data]) => {
                     if (data) {
                         const missionDataProperty = key as MissionDataProperty;
-                        if (!this.storedData[missionDataProperty]) {
-                            this.storedData[missionDataProperty] = [];
+                        if (!this._storedData[missionDataProperty]) {
+                            this._storedData[missionDataProperty] = [];
                         }
-                        this.storedData[missionDataProperty]?.push(...data);
+                        this._storedData[missionDataProperty]?.push(...data);
                     }
                 });
 
                 // Update the current segment index.
-                const currentSegmentIndex = this.getMissionEventSegments().findIndex(
-                    (x) => x.endTimeSec > this.missionTimeSec
+                const currentSegmentIndex = this._getMissionEventSegments().findIndex(
+                    (x) => x.endTimeSec > this._missionTimeSec
                 );
-                if (currentSegmentIndex !== -1 && currentSegmentIndex !== this.pastIndex) {
-                    this.pastIndex = currentSegmentIndex;
-                    this.targetTranslation = this.canvasHeight - TIMER_HEIGHT - LABEL_HEIGHT;
-                    this.cancelAndRequestAnimationFrame(this.transitionTimeline);
+                if (currentSegmentIndex !== -1 && currentSegmentIndex !== this._pastIndex) {
+                    this._pastIndex = currentSegmentIndex;
+                    this._targetTranslation = this._canvasHeight - TIMER_HEIGHT - LABEL_HEIGHT;
+                    this._cancelAndRequestAnimationFrame(this._transitionTimeline);
                     return;
                 }
 
                 // Not done transitioning
-                if (this.currentTranslation !== this.targetTranslation) {
+                if (this._currentTranslation !== this._targetTranslation) {
                     return;
                 }
 
-                this.cancelAndRequestAnimationFrame(this.drawTimeline);
+                this._cancelAndRequestAnimationFrame(this._drawTimeline);
             };
 
             port.onmessage = onPortMessage;
         }
     }
 
-    private readonly cancelAndRequestAnimationFrame = (draw: VoidFunction): void => {
+    private readonly _cancelAndRequestAnimationFrame = (draw: VoidFunction): void => {
         this._cancelAnimationFrameIfExists();
-        this.frame = requestAnimationFrame(draw);
+        this._frame = requestAnimationFrame(draw);
     };
 
     private readonly _cancelAnimationFrameIfExists = (): void => {
-        if (this.frame) {
-            cancelAnimationFrame(this.frame);
-            this.frame = null;
+        if (this._frame) {
+            cancelAnimationFrame(this._frame);
+            this._frame = null;
         }
     };
 
-    private readonly transitionTimeline = (): void => {
-        if (this.currentTranslation !== this.targetTranslation) {
-            const ctx = this.offscreenCanvas?.getContext('2d');
+    private readonly _transitionTimeline = (): void => {
+        if (this._currentTranslation !== this._targetTranslation) {
+            const ctx = this._offscreenCanvas?.getContext('2d');
             if (!ctx) return;
 
             const time = 1 / TRANSITION_DURATION_SEC;
-            const transitionIncr = this.fps / time;
-            this.currentTranslation = Math.min(
-                this.targetTranslation,
-                this.currentTranslation + this.canvasHeight / transitionIncr
+            const transitionIncr = this._fps / time;
+            this._currentTranslation = Math.min(
+                this._targetTranslation,
+                this._currentTranslation + this._canvasHeight / transitionIncr
             );
 
-            this.drawTimeline();
+            this._drawTimeline();
 
-            this.cancelAndRequestAnimationFrame(this.transitionTimeline);
+            this._cancelAndRequestAnimationFrame(this._transitionTimeline);
         }
     };
 
-    private readonly drawTimeline = (): void => {
-        const ctx = this.offscreenCanvas?.getContext('2d');
+    private readonly _drawTimeline = (): void => {
+        const ctx = this._offscreenCanvas?.getContext('2d');
         if (!ctx) return;
 
-        const { canvasWidth, canvasHeight } = this;
+        const { _canvasWidth: canvasWidth, _canvasHeight: canvasHeight } = this;
 
         const drawMissionEventsSegment = (
             missionEventsSegment: MissionEventsSegment,
@@ -185,7 +190,7 @@ export class Timeline2d {
             ctx.globalAlpha = 1.0;
 
             // Draw the passed timeline
-            const passedTimeInSec = this.missionTimeSec;
+            const passedTimeInSec = this._missionTimeSec;
             const passedTimeInPercent = Math.max(
                 // For future event segments, don't show a line that's e.g. -15% completed.
                 0,
@@ -216,7 +221,7 @@ export class Timeline2d {
             ctx.fillStyle = '#ffffff';
             const ARBITRARY_OFFSET = 3;
             missionEventsSegment.missionEvents.forEach((missionEvent) => {
-                const hasBeenPassed = this.missionTimeSec >= missionEvent.timeFromLaunchSec;
+                const hasBeenPassed = this._missionTimeSec >= missionEvent.timeFromLaunchSec;
                 if (!hasBeenPassed) ctx.globalAlpha = 0.5;
                 const y =
                     timelineHeight -
@@ -240,12 +245,12 @@ export class Timeline2d {
         // Save default view
         ctx.save();
         // Move canvas for transition
-        ctx.translate(0, this.currentTranslation);
-        drawMissionEventsSegment(this.getMissionEventSegments()[0], 0);
+        ctx.translate(0, this._currentTranslation);
+        drawMissionEventsSegment(this._getMissionEventSegments()[0], 0);
 
         // Move canvas for segment (stacked on top)
         ctx.translate(0, -(canvasHeight - TIMER_HEIGHT));
-        drawMissionEventsSegment(this.getMissionEventSegments()[1], 1);
+        drawMissionEventsSegment(this._getMissionEventSegments()[1], 1);
 
         // Restore default view
         ctx.restore();
@@ -257,17 +262,17 @@ export class Timeline2d {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 18px BlenderPro, monospace';
         const timerCenter = canvasWidth / 2;
-        ctx.fillText(`T + ${this.formatDuration(this.missionTimeSec)}`, timerCenter, 0);
+        ctx.fillText(`T + ${this._formatDuration(this._missionTimeSec)}`, timerCenter, 0);
     };
 
-    private getMissionEventSegments(): MissionEventsSegment[] {
+    private _getMissionEventSegments(): MissionEventsSegment[] {
         const thresholdSec = 500;
         const segments: MissionEventsSegment[] = [];
         let currentSegment = [];
 
-        for (let i = 0; i < this.missionEvents.length - 1; i++) {
-            const currentEvent = this.missionEvents[i];
-            const nextEvent = this.missionEvents[i + 1];
+        for (let i = 0; i < this._missionEvents.length - 1; i++) {
+            const currentEvent = this._missionEvents[i];
+            const nextEvent = this._missionEvents[i + 1];
 
             currentSegment.push(currentEvent);
 
@@ -284,7 +289,7 @@ export class Timeline2d {
         }
 
         // Don't forget to include the last event and segment.
-        currentSegment.push(this.missionEvents[this.missionEvents.length - 1]);
+        currentSegment.push(this._missionEvents[this._missionEvents.length - 1]);
         segments.push({
             startTimeSec: segments[segments.length - 1]?.endTimeSec ?? 0,
             missionEvents: currentSegment,
@@ -294,7 +299,7 @@ export class Timeline2d {
         return segments;
     }
 
-    private formatDuration(sec: number): string {
+    private _formatDuration(sec: number): string {
         let totalSeconds = Math.floor(sec);
         const hours = Math.floor(totalSeconds / 3600);
         totalSeconds %= 3600;

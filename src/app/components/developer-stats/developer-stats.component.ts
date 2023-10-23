@@ -13,12 +13,12 @@ import { FpsCounter } from 'src/app/utils/FpsCounter';
     styleUrls: ['./developer-stats.component.scss'],
 })
 export class DeveloperStatsComponent implements OnDestroy {
-    constructor(public perfStatsService: PerfStatsService) {
+    public constructor(public perfStatsService: PerfStatsService) {
         this.workerFpsEntries = this.perfStatsService.workerFps$.pipe(map(Object.entries));
         this.fpsCounter = new FpsCounter();
 
-        this.unsubscribe.push(this.fpsCounter.stop);
-        this.unsubscribe.push(
+        this._unsubscribe.push(this.fpsCounter.stop);
+        this._unsubscribe.push(
             this.perfStatsService.showPerfStats$.subscribe((showPerfStats) => {
                 if (showPerfStats) this.fpsCounter.start();
                 else this.fpsCounter.stop();
@@ -26,7 +26,7 @@ export class DeveloperStatsComponent implements OnDestroy {
         );
     }
 
-    private readonly unsubscribe: VoidFunction[] = [];
+    private readonly _unsubscribe: VoidFunction[] = [];
 
     public readonly fpsCounter = new FpsCounter();
 
@@ -35,6 +35,6 @@ export class DeveloperStatsComponent implements OnDestroy {
     >;
 
     public ngOnDestroy(): void {
-        this.unsubscribe.forEach((u) => u());
+        this._unsubscribe.forEach((u) => u());
     }
 }

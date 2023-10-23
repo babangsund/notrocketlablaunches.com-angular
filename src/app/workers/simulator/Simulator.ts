@@ -14,108 +14,108 @@ import {
 type Timeout = ReturnType<typeof setInterval>;
 
 export class Simulator {
-    private mission: null | Mission = null;
+    private _mission: null | Mission = null;
     /**
      * Seconds since mission started.
      */
-    private missionTimeSec = 0;
+    private _missionTimeSec = 0;
     /**
      * Millisecond timestamp for when the mission was started. Useful for determining current "absolute" mission time in Ms.
      */
-    private missionStartTimeMs: number | null = null;
+    private _missionStartTimeMs: number | null = null;
     /**
      * The nodejs interval to be cleared if the mission is paused.
      */
-    private missionInterval: Timeout | null = null;
+    private _missionInterval: Timeout | null = null;
     /**
      * When updateMission is called, startMission is blocked by the promise.
      * This is primarily because updateMission needs to fetch (import) the missionData
      */
-    private updateMissionPromise: null | Promise<void> = null;
+    private _updateMissionPromise: null | Promise<void> = null;
     /**
      * All interpolated data is persisted in dataLakes as a source of truth.
      * Existing data is emitted to subscribers from the dataLake when they connect,
      * and newly generated data is then pushed in batches.
      */
-    private dataLake: Partial<Record<MissionDataProperty, number[]>> = {};
+    private _dataLake: Partial<Record<MissionDataProperty, number[]>> = {};
     /**
      * The subscribers for a given telemetry property.
      * A subscriber will also hold a reference to an entry in this list.
      */
-    private subscriberPool: Partial<Record<MissionDataProperty, number[][]>> = {};
+    private _subscriberPool: Partial<Record<MissionDataProperty, number[][]>> = {};
     /**
      * Current index of missionData for each telemetry property.
      */
-    private checkpointIndexMap: Partial<Record<MissionDataProperty, number>> = {};
+    private _checkpointIndexMap: Partial<Record<MissionDataProperty, number>> = {};
     /**
      * All the available data for interpolation.
      */
-    private missionData: Partial<MissionData> = {};
+    private _missionData: Partial<MissionData> = {};
     /**
      * New property subscribers are processed every cycle.
      */
-    private readonly addSubscriberEventQueue: AddSubscriberEvent[] = [];
+    private readonly _addSubscriberEventQueue: AddSubscriberEvent[] = [];
     /**
      * Subscriber to one or more properties (telemetry).
      * Interval is responsible for sending to port and then draining batchedData.
      */
-    private readonly subscribers = new Map<string, Subscriber>();
+    private readonly _subscribers = new Map<string, Subscriber>();
     /**
      * A multiplier for the timeStep. Determines how quickly the mission progresses.
      */
-    private missionPlaybackSpeed = DEFAULT_MISSION_PLAYBACK_SPEED;
+    private _missionPlaybackSpeed = DEFAULT_MISSION_PLAYBACK_SPEED;
     /**
      * The rate at which mission time moves.
      * /10 is 10x the speed
      */
-    private timeStep = 1 / (TELEMETRY_SOURCE_RATE_HZ / this.missionPlaybackSpeed);
+    private _timeStep = 1 / (TELEMETRY_SOURCE_RATE_HZ / this._missionPlaybackSpeed);
     /**
      * Is the mission currently running?
      */
-    isMissionRunning = false;
+    private _isMissionRunning = false;
     /**
      * Did the mission reach the last event?
      */
-    isMissionComplete = false;
+    private _isMissionComplete = false;
 
     /**
      * Set a mission. Fetches interpolation data.
      * Wraps internal _updateMission to prevent public APIs from being async when it isn't needed.
      */
     public updateMission(missionId: string): void {
-        this.updateMissionPromise = this._updateMission(missionId);
+        this._updateMissionPromise = this._updateMission(missionId);
     }
 
     /**
      * Starts mission timer and generates interpolated data between "checkpoints".
      */
     public startMission(): void {
-        if (this.isMissionComplete) return; // Noop
+        if (this._isMissionComplete) return; // Noop
 
         void this._startMission();
 
         // Restart subscribers
-        this.subscribers.forEach((sub) => {
+        this._subscribers.forEach((sub) => {
             clearInterval(sub.interval);
 
             // Only transfer to worker at the desired rate
-            sub.interval = this.startDataInterval(sub.port, sub.batchedData, sub.hz);
-            this.subscribers.set(sub.id, sub);
+            sub.interval = this._startDataInterval(sub.port, sub.batchedData, sub.hz);
+            this._subscribers.set(sub.id, sub);
         });
     }
 
     public stopMission(): void {
-        this.isMissionRunning = false;
-        if (this.missionInterval) clearInterval(this.missionInterval);
+        this._isMissionRunning = false;
+        if (this._missionInterval) clearInterval(this._missionInterval);
 
-        this.subscribers.forEach((sub) => {
+        this._subscribers.forEach((sub) => {
             clearInterval(sub.interval);
         });
     }
 
     public updateMissionPlaybackSpeed(missionPlaybackSpeed: number): void {
-        this.missionPlaybackSpeed = missionPlaybackSpeed;
-        this.timeStep = 1 / (TELEMETRY_SOURCE_RATE_HZ / this.missionPlaybackSpeed);
+        this._missionPlaybackSpeed = missionPlaybackSpeed;
+        this._timeStep = 1 / (TELEMETRY_SOURCE_RATE_HZ / this._missionPlaybackSpeed);
         void this._startMission();
     }
 
@@ -123,30 +123,30 @@ export class Simulator {
      * Subscribes a new port to receive requested data in batches.
      */
     public addSubscriber(evt: AddSubscriberEvent): void {
-        this.addSubscriberEventQueue.push(evt);
+        this._addSubscriberEventQueue.push(evt);
     }
 
     /**
      * Changes the rate at which subscribed ports receive data.
      */
     public updateSubscriber(evt: UpdateSubscriberEvent): void {
-        const subscriber = this.subscribers.get(evt.id);
+        const subscriber = this._subscribers.get(evt.id);
         if (!subscriber) return;
 
         const batchedData = subscriber.batchedData;
         clearInterval(subscriber.interval);
 
         // Only transfer to worker at the desired rate
-        subscriber.interval = this.startDataInterval(subscriber.port, batchedData, evt.hz);
-        this.subscribers.set(subscriber.id, subscriber);
+        subscriber.interval = this._startDataInterval(subscriber.port, batchedData, evt.hz);
+        this._subscribers.set(subscriber.id, subscriber);
     }
 
     private async _updateMission(_missionId: string): Promise<void> {
         const mission = await import(`../../data/missions/${_missionId}.json`);
         const missionData = mission.missionData;
 
-        this.mission = mission;
-        this.missionData = missionData;
+        this._mission = mission;
+        this._missionData = missionData;
 
         await new Promise<void>((resolve) => {
             const dataKeys = Object.keys(missionData);
@@ -158,16 +158,16 @@ export class Simulator {
                 else interpolationDataKeys.push(dataKey);
             }
 
-            this.dataLake = dataKeys.reduce((p, c) => ({ ...p, [c]: [] }), {});
-            this.subscriberPool = interpolationDataKeys.reduce((p, c) => ({ ...p, [c]: [] }), {});
-            this.checkpointIndexMap = interpolationDataKeys.reduce(
+            this._dataLake = dataKeys.reduce((p, c) => ({ ...p, [c]: [] }), {});
+            this._subscriberPool = interpolationDataKeys.reduce((p, c) => ({ ...p, [c]: [] }), {});
+            this._checkpointIndexMap = interpolationDataKeys.reduce(
                 (p, c) => ({ ...p, [c]: 0 }),
                 {}
             );
 
             plannedDataKeys.forEach((key) => {
                 // Ignore timestamp from planned data. (i.e. alt, lat, lon)
-                this.dataLake[key]?.push(
+                this._dataLake[key]?.push(
                     ...missionData[key].map(([, value]: [number, number]) => value)
                 );
             });
@@ -177,36 +177,37 @@ export class Simulator {
     }
 
     private async _startMission(): Promise<void> {
-        if (this.updateMissionPromise) await this.updateMissionPromise;
-        if (this.missionInterval) clearInterval(this.missionInterval);
-        if (!this.missionStartTimeMs) this.missionStartTimeMs = Date.now();
+        if (this._updateMissionPromise) await this._updateMissionPromise;
+        if (this._missionInterval) clearInterval(this._missionInterval);
+        if (!this._missionStartTimeMs) this._missionStartTimeMs = Date.now();
 
-        const telemetryKeys = Object.keys(this.checkpointIndexMap);
+        const telemetryKeys = Object.keys(this._checkpointIndexMap);
 
-        this.isMissionRunning = true;
-        this.missionInterval = setInterval(() => {
+        this._isMissionRunning = true;
+        this._missionInterval = setInterval(() => {
             if (
-                this.mission?.missionEvents &&
-                this.missionTimeSec >
-                    this.mission?.missionEvents[this.mission?.missionEvents.length - 1]
+                this._mission?.missionEvents &&
+                this._missionTimeSec >
+                    this._mission?.missionEvents[this._mission?.missionEvents.length - 1]
                         .timeFromLaunchSec
             ) {
-                this.isMissionComplete = true;
-                this.isMissionRunning = false;
+                this._isMissionComplete = true;
+                this._isMissionRunning = false;
                 this.stopMission();
                 postMessage({ type: 'mission-complete' } satisfies MissionCompleteEvent);
                 return;
             }
 
-            this.drainAddSubscriberEventQueue();
-            if (!this.isMissionRunning && this.missionInterval) clearInterval(this.missionInterval);
+            this._drainAddSubscriberEventQueue();
+            if (!this._isMissionRunning && this._missionInterval)
+                clearInterval(this._missionInterval);
 
-            this.missionTimeSec += this.timeStep;
+            this._missionTimeSec += this._timeStep;
 
             const currentMissionTimeMs =
-                (this.missionStartTimeMs ?? 0) + this.missionTimeSec * 1000;
+                (this._missionStartTimeMs ?? 0) + this._missionTimeSec * 1000;
             const now = new Date(currentMissionTimeMs).valueOf();
-            const interpolateTelemetry = this.makeTelemetryInterpolation(now);
+            const interpolateTelemetry = this._makeTelemetryInterpolation(now);
             for (let idx = 0; idx < telemetryKeys.length; idx++) {
                 const property = telemetryKeys[idx] as MissionDataProperty;
                 interpolateTelemetry(property);
@@ -218,16 +219,16 @@ export class Simulator {
 
     private _addSubscriber(evt: AddSubscriberEvent): void {
         // Send the existing produced data to this consumer.
-        if (this.mission) {
+        if (this._mission) {
             evt.port.postMessage({
                 type: 'initial-data',
-                missionTimeSec: this.missionTimeSec,
-                missionId: this.mission.missionId,
-                missionSummary: this.mission.missionSummary,
-                missionStages: this.mission.missionStages,
-                missionEvents: this.mission.missionEvents,
+                missionTimeSec: this._missionTimeSec,
+                missionId: this._mission.missionId,
+                missionSummary: this._mission.missionSummary,
+                missionStages: this._mission.missionStages,
+                missionEvents: this._mission.missionEvents,
                 initialData: evt.properties.reduce<BatchedData>((p, c) => {
-                    p[c] = this.dataLake[c] ?? [];
+                    p[c] = this._dataLake[c] ?? [];
                     return p;
                 }, {}),
             } satisfies InitialDataEvent);
@@ -239,7 +240,7 @@ export class Simulator {
         evt.properties.forEach((property) => {
             const data = batchedData[property];
             if (data) {
-                this.subscriberPool[property]?.push(data);
+                this._subscriberPool[property]?.push(data);
             }
         });
 
@@ -249,27 +250,27 @@ export class Simulator {
             hz: evt.hz,
             port: evt.port,
             properties: evt.properties,
-            interval: this.startDataInterval(evt.port, batchedData, evt.hz),
+            interval: this._startDataInterval(evt.port, batchedData, evt.hz),
         };
-        this.subscribers.set(evt.id, subscriber);
+        this._subscribers.set(evt.id, subscriber);
     }
 
-    private drainAddSubscriberEventQueue(): void {
-        while (this.addSubscriberEventQueue.length) {
-            const addSubscriberEvent = this.addSubscriberEventQueue.pop();
+    private _drainAddSubscriberEventQueue(): void {
+        while (this._addSubscriberEventQueue.length) {
+            const addSubscriberEvent = this._addSubscriberEventQueue.pop();
             if (addSubscriberEvent) {
                 this._addSubscriber(addSubscriberEvent);
             }
         }
     }
 
-    private startDataInterval(port: MessagePort, batchedData: BatchedData, hz: number): Timeout {
+    private _startDataInterval(port: MessagePort, batchedData: BatchedData, hz: number): Timeout {
         const intervalMs = 1000 / hz;
         const interval = setInterval(() => {
             port.postMessage({
                 type: 'batched-data',
                 batchedData,
-                missionTimeSec: this.missionTimeSec,
+                missionTimeSec: this._missionTimeSec,
             } satisfies BatchedDataEvent);
             Object.values(batchedData).forEach((data) => {
                 if (data) {
@@ -288,14 +289,14 @@ export class Simulator {
      * @param nowMs Current time in milliseconds
      * @returns void
      */
-    private makeTelemetryInterpolation(nowMs: number): (property: MissionDataProperty) => void {
+    private _makeTelemetryInterpolation(nowMs: number): (property: MissionDataProperty) => void {
         const interpolateProperty = (property: MissionDataProperty): void => {
-            const propertyCheckpoints = this.missionData[property];
+            const propertyCheckpoints = this._missionData[property];
             if (!propertyCheckpoints) {
                 return;
             }
 
-            const checkpointIndex = this.checkpointIndexMap[property];
+            const checkpointIndex = this._checkpointIndexMap[property];
             if (checkpointIndex === undefined) {
                 return;
             }
@@ -310,16 +311,16 @@ export class Simulator {
             }
 
             // Check if the current time has passed the next data point
-            if (this.missionTimeSec >= x1) {
+            if (this._missionTimeSec >= x1) {
                 // Update the checkpoint index to the next pair of data points
-                this.checkpointIndexMap[property] = checkpointIndex + 1;
+                this._checkpointIndexMap[property] = checkpointIndex + 1;
                 return;
             }
 
             if (checkpointIndex < propertyCheckpoints.length - 1) {
-                const interpolatedValue = linearInterpolation(x0, y0, x1, y1, this.missionTimeSec);
-                this.dataLake[property]?.push(nowMs, interpolatedValue);
-                this.subscriberPool[property]?.forEach((s) => s.push(nowMs, interpolatedValue));
+                const interpolatedValue = linearInterpolation(x0, y0, x1, y1, this._missionTimeSec);
+                this._dataLake[property]?.push(nowMs, interpolatedValue);
+                this._subscriberPool[property]?.forEach((s) => s.push(nowMs, interpolatedValue));
             }
         };
         return interpolateProperty;

@@ -13,7 +13,7 @@ import { ModalComponent } from '../modal/modal.component';
     styleUrls: ['./start-mission.component.scss'],
 })
 export class StartMissionComponent {
-    constructor(public simulatorService: SimulatorService) {
+    public constructor(public simulatorService: SimulatorService) {
         this.launchTimeAsDate = this.simulatorService.missionSummary$.pipe(
             map((ms) => (ms?.launchDateMs ? new Date(ms?.launchDateMs) : new Date()))
         );

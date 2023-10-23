@@ -19,10 +19,10 @@ import { createResizeObserver } from 'src/app/utils/createResizeListener';
     styleUrls: ['./timeline2d.component.scss'],
 })
 export class Timeline2dComponent implements AfterViewInit, OnDestroy {
-    constructor(
-        private _simulatorService: SimulatorService,
-        private _hostElement: ElementRef,
-        private _renderer: Renderer2
+    public constructor(
+        private readonly _simulatorService: SimulatorService,
+        private readonly _hostElement: ElementRef,
+        private readonly _renderer: Renderer2
     ) {
         this._worker = new Worker(
             new URL('../../workers/timeline2d/timeline2d.worker', import.meta.url),
@@ -34,9 +34,9 @@ export class Timeline2dComponent implements AfterViewInit, OnDestroy {
 
     public static hz = 50;
 
-    private _worker: Worker;
+    private readonly _worker: Worker;
 
-    private _unsubscribe: VoidFunction[] = [];
+    private readonly _unsubscribe: VoidFunction[] = [];
 
     @HostBinding('attr.role')
     public get role(): string {
@@ -49,10 +49,10 @@ export class Timeline2dComponent implements AfterViewInit, OnDestroy {
     }
 
     @ViewChild('canvas')
-    private canvas: ElementRef<HTMLCanvasElement> | undefined;
+    private readonly _canvas: ElementRef<HTMLCanvasElement> | undefined;
 
     public ngAfterViewInit(): void {
-        const canvas = this.canvas?.nativeElement;
+        const canvas = this._canvas?.nativeElement;
         if (canvas !== undefined) {
             const dpr = window.devicePixelRatio;
 
@@ -72,7 +72,7 @@ export class Timeline2dComponent implements AfterViewInit, OnDestroy {
                 workerId: Timeline2dComponent.id,
             });
 
-            this.startResizeListener();
+            this._startResizeListener();
         }
     }
 
@@ -80,7 +80,7 @@ export class Timeline2dComponent implements AfterViewInit, OnDestroy {
         this._unsubscribe.forEach((u) => u());
     }
 
-    private startResizeListener(): void {
+    private _startResizeListener(): void {
         const canvas = this._hostElement.nativeElement;
         if (canvas) {
             const resizeObserver = createResizeObserver(canvas, ({ width, height }) => {

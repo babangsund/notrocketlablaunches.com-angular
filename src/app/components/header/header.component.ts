@@ -13,8 +13,8 @@ import { getAppVersion } from '../../utils/getAppVersion';
     styleUrls: ['./header.component.scss'],
 })
 export class HeaderComponent {
-    constructor(
-        private _perfStatsService: PerfStatsService,
+    public constructor(
+        private readonly _perfStatsService: PerfStatsService,
         public simulatorService: SimulatorService
     ) {
         this.missionStatus$ = combineLatest(
@@ -32,7 +32,7 @@ export class HeaderComponent {
     public missionStatus$: Observable<string>;
 
     @HostBinding('attr.role')
-    public get role() {
+    public get role(): string {
         return 'banner';
     }
 

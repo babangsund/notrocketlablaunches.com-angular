@@ -20,7 +20,7 @@ import {
 export class SimulatorService {
     public static id = 'Simulator';
 
-    constructor(private _perfStatsService: PerfStatsService) {
+    public constructor(private readonly _perfStatsService: PerfStatsService) {
         this._worker = new Worker(
             new URL('../../workers/simulator/simulator.worker', import.meta.url),
             { type: 'module' }
@@ -44,15 +44,17 @@ export class SimulatorService {
         this.updateMissionSummary(DEFAULT_MISSION_SUMMARY);
     }
 
-    private _worker: Worker;
+    private readonly _worker: Worker;
 
-    private _missionSummary = new BehaviorSubject<MissionSummary | null>(DEFAULT_MISSION_SUMMARY);
+    private readonly _missionSummary = new BehaviorSubject<MissionSummary | null>(
+        DEFAULT_MISSION_SUMMARY
+    );
 
-    private _missionIsRunning = new BehaviorSubject(false);
+    private readonly _missionIsRunning = new BehaviorSubject(false);
 
-    private _missionIsCompleted = new BehaviorSubject(false);
+    private readonly _missionIsCompleted = new BehaviorSubject(false);
 
-    private _missionPlaybackSpeed = new BehaviorSubject(DEFAULT_MISSION_PLAYBACK_SPEED);
+    private readonly _missionPlaybackSpeed = new BehaviorSubject(DEFAULT_MISSION_PLAYBACK_SPEED);
 
     public readonly missionId$ = this._missionSummary.pipe(map((ms) => ms?.missionId ?? null));
 
@@ -72,11 +74,11 @@ export class SimulatorService {
         return this._missionPlaybackSpeed.asObservable();
     }
 
-    public updateMissionIsCompleted(missionIsCompleted: boolean) {
+    public updateMissionIsCompleted(missionIsCompleted: boolean): void {
         this._missionIsCompleted.next(missionIsCompleted);
     }
 
-    public toggleMissionRunning() {
+    public toggleMissionRunning(): void {
         const missionIsRunning = !this._missionIsRunning.getValue();
         this._missionIsRunning.next(missionIsRunning);
         if (missionIsRunning) {
@@ -98,7 +100,7 @@ export class SimulatorService {
         } satisfies UpdateMissionEvent);
     }
 
-    public updateMissionPlaybackSpeed(missionPlaybackSpeed: number) {
+    public updateMissionPlaybackSpeed(missionPlaybackSpeed: number): void {
         this._missionPlaybackSpeed.next(missionPlaybackSpeed);
         this._worker.postMessage({
             type: 'update-mission-playback-speed',
@@ -120,7 +122,7 @@ export class SimulatorService {
         canvas: HTMLCanvasElement;
         properties: MissionDataProperty[];
         telemetryColors: Record<string, string>;
-    }) {
+    }): void {
         this._perfStatsService.addWorker();
 
         const channel = new MessageChannel();
