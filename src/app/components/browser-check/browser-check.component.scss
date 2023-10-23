@@ -1,0 +1,11 @@
+#invalid-browser {
+    inset: 0;
+    z-index: 9999;
+    text-align: center;
+    font-size: 1.125rem;
+    font-weight: 500;
+    position: fixed;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-color);
+}
