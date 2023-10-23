@@ -1,27 +1,26 @@
-# NotrocketlablaunchesComAngular
+# [notrocketlablaunches.com](https://notrocketlablaunches.com/)
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.2.6.
+### Commands
 
-## Development server
+-   `npm install` to install project dependencies.
+-   `npm run start` to start a dev server.
+-   `npm run test` to run tests.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+This project was built with Angular. See [their website](https://angular.io/) for more information about their cli.
 
-## Code scaffolding
+### Project Goals
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+The goal of this project was to push browser capabilities to the limit while maintaining peak performance and maximizing GPU utilization. Rocket telemetry is produced at a rate of 100hz and displayed at 50hz by default. Instead of receiving data from a server (via WebSocket or SSEs), I've imposed an additional artificial constraint where all data is generated (through linear interpolation) on the client side.
 
-## Build
+A detailed write-up will follow soon!
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+### History, aka TODO
 
-## Running unit tests
+This project was originally built on only two dependencies [`gl-matrix`](https://github.com/toji/gl-matrix) and [`lit`](https://lit.dev/). It recently transitioned to Angular. The functional architecture in line-chart2d and globe3d draw commands reflects this history. The aim is to eventually convert these to classes for a fully Angular-centric application.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+### Links
 
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+-   [notrocketlablaunches.com (this project)](https://notrocketlablaunches.com/)
+-   [notspacexlaunches.com](https://notspacexlaunches.com/)
+-   [My Github profile](https://github.com/babangsund/)
+-   [My personal website](https://www.babangsund.com/)
