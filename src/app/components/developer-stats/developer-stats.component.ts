@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { WorkerId } from 'src/app/services/perf-stats/perf-stats.model';
 import { PerfStatsService } from 'src/app/services/perf-stats/perf-stats.service';
-import { makeFpsCounter } from 'src/app/utils/makeFpsCounter';
+import { WorkerId } from 'src/app/services/perf-stats/perf-stats.service.model';
+import { FpsCounter } from 'src/app/utils/FpsCounter';
 
 @Component({
     selector: 'app-developer-stats',
@@ -13,26 +13,28 @@ import { makeFpsCounter } from 'src/app/utils/makeFpsCounter';
     styleUrls: ['./developer-stats.component.scss'],
 })
 export class DeveloperStatsComponent implements OnDestroy {
-    _perfStatsService: PerfStatsService;
+    constructor(public perfStatsService: PerfStatsService) {
+        this.workerFpsEntries = this.perfStatsService.workerFps$.pipe(map(Object.entries));
+        this.fpsCounter = new FpsCounter();
 
-    workerFpsEntries: Observable<ReturnType<typeof Object.entries<Record<WorkerId, number>>>>;
-
-    mainThreadFps: Observable<number>;
-
-    stopFpsCounter: VoidFunction;
-
-    constructor(perfStatsService: PerfStatsService) {
-        this._perfStatsService = perfStatsService;
-
-        this.workerFpsEntries = this._perfStatsService.workerFps$.pipe(map(Object.entries));
-
-        const { fps, stop, start } = makeFpsCounter();
-        this.stopFpsCounter = stop;
-        start();
-        this.mainThreadFps = fps;
+        this.unsubscribe.push(this.fpsCounter.stop);
+        this.unsubscribe.push(
+            this.perfStatsService.showPerfStats$.subscribe((showPerfStats) => {
+                if (showPerfStats) this.fpsCounter.start();
+                else this.fpsCounter.stop();
+            }).unsubscribe
+        );
     }
 
-    ngOnDestroy(): void {
-        this.stopFpsCounter();
+    private readonly unsubscribe: VoidFunction[] = [];
+
+    public readonly fpsCounter = new FpsCounter();
+
+    public readonly workerFpsEntries: Observable<
+        ReturnType<typeof Object.entries<Record<WorkerId, number>>>
+    >;
+
+    public ngOnDestroy(): void {
+        this.unsubscribe.forEach((u) => u());
     }
 }

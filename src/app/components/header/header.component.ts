@@ -13,16 +13,13 @@ import { getAppVersion } from '../../utils/getAppVersion';
     styleUrls: ['./header.component.scss'],
 })
 export class HeaderComponent {
-    _perfStatsService: PerfStatsService;
-    _simulatorService: SimulatorService;
-
-    constructor(perfStatsService: PerfStatsService, simulatorService: SimulatorService) {
-        this._perfStatsService = perfStatsService;
-        this._simulatorService = simulatorService;
-
+    constructor(
+        private _perfStatsService: PerfStatsService,
+        public simulatorService: SimulatorService
+    ) {
         this.missionStatus$ = combineLatest(
-            this._simulatorService.missionIsCompleted$,
-            this._simulatorService.missionIsRunning$
+            this.simulatorService.missionIsCompleted$,
+            this.simulatorService.missionIsRunning$
         ).pipe(
             map(([missionIsCompleted, missionIsRunning]) =>
                 missionIsCompleted ? 'Completed' : missionIsRunning ? 'Running' : 'Paused'
@@ -30,25 +27,25 @@ export class HeaderComponent {
         );
     }
 
-    appVersion = getAppVersion();
+    public appVersion = getAppVersion();
 
-    missionStatus$: Observable<string>;
+    public missionStatus$: Observable<string>;
 
     @HostBinding('attr.role')
-    get role() {
+    public get role() {
         return 'banner';
     }
 
-    handleClickDeveloperStats() {
+    public handleClickDeveloperStats(): void {
         this._perfStatsService.toggleShowPerfStats();
     }
 
-    handleClickMissionStatus() {
-        this._simulatorService.toggleMissionRunning();
+    public handleClickMissionStatus(): void {
+        this.simulatorService.toggleMissionRunning();
     }
 
-    handleChangeMissionPlaybackSpeed(evt: Event) {
+    public handleChangeMissionPlaybackSpeed(evt: Event): void {
         const missionPlaybackSpeed = parseInt((evt.target as HTMLSelectElement).value);
-        this._simulatorService.setMissionPlaybackSpeed(missionPlaybackSpeed);
+        this.simulatorService.updateMissionPlaybackSpeed(missionPlaybackSpeed);
     }
 }

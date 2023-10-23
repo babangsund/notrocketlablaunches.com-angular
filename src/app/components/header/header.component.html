@@ -10,8 +10,8 @@
     <div class="flex-center">
         <span>Playback speed:</span>
         <select
-            [disabled]="_simulatorService.missionIsCompleted$ | async"
-            [value]="_simulatorService.missionPlaybackSpeed$ | async"
+            [disabled]="simulatorService.missionIsCompleted$ | async"
+            [value]="simulatorService.missionPlaybackSpeed$ | async"
             (change)="handleChangeMissionPlaybackSpeed($event)"
         >
             <option value="1">1x</option>
@@ -24,7 +24,7 @@
 <div class="flex-center group right">
     <div class="flex-center">
         <span>Mission:</span>
-        <strong>{{ (_simulatorService.missionSummary$ | async)?.missionName ?? '' }}</strong>
+        <strong>{{ (simulatorService.missionSummary$ | async)?.missionName ?? '' }}</strong>
     </div>
     <div class="flex-center">
         <span>Version:</span>

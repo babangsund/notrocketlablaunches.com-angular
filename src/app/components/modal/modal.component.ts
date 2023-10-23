@@ -10,7 +10,7 @@ import { Component, HostBinding } from '@angular/core';
 })
 export class ModalComponent {
     @HostBinding('attr.role')
-    get role() {
+    public get role() {
         return 'presentation';
     }
 }

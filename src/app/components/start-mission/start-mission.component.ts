@@ -13,32 +13,28 @@ import { ModalComponent } from '../modal/modal.component';
     styleUrls: ['./start-mission.component.scss'],
 })
 export class StartMissionComponent {
-    _simulatorService: SimulatorService;
-
-    constructor(simulatorService: SimulatorService) {
-        this._simulatorService = simulatorService;
-
-        this.launchTimeAsDate = this._simulatorService.missionSummary$.pipe(
+    constructor(public simulatorService: SimulatorService) {
+        this.launchTimeAsDate = this.simulatorService.missionSummary$.pipe(
             map((ms) => (ms?.launchDateMs ? new Date(ms?.launchDateMs) : new Date()))
         );
     }
     /**
      * Current version of the application.
      */
-    appVersion = getAppVersion();
+    public appVersion = getAppVersion();
     /**
      * Mission has been started. When the mission has been started, this modal will no longer be shown.
      */
-    missionStarted = false;
+    public missionStarted = false;
     /**
      * Binds the launch time with the JS Date object to access it in the template.
      */
-    launchTimeAsDate: Observable<Date>;
+    public launchTimeAsDate: Observable<Date>;
     /**
      * Start the mission!
      */
-    handleStartMission() {
+    public handleStartMission(): void {
         this.missionStarted = true;
-        this._simulatorService.toggleMissionRunning();
+        this.simulatorService.toggleMissionRunning();
     }
 }

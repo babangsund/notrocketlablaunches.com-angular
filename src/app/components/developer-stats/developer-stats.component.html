@@ -1,9 +1,9 @@
-<section *ngIf="(_perfStatsService.showPerfStats$ | async) === true" class="container">
+<section *ngIf="(perfStatsService.showPerfStats$ | async) === true" class="container">
     <div>
         <h3>Main Thread</h3>
         <div class="label-value">
             <small>FPS:</small>
-            <code>{{ mainThreadFps | async }}</code>
+            <code>{{ fpsCounter.fps$ | async }}</code>
         </div>
     </div>
     <div>
@@ -11,11 +11,11 @@
         <div>
             <div class="label-value">
                 <small>Number of workers:</small>
-                <code>{{ _perfStatsService.workerCount$ | async }}</code>
+                <code>{{ perfStatsService.workerCount$ | async }}</code>
             </div>
-            <div *ngIf="_perfStatsService.workerFps$ | async">
+            <div *ngIf="perfStatsService.workerFps$ | async">
                 <div class="label-value" *ngFor="let worker of workerFpsEntries | async">
-                    <small>{{ worker[0] }} Worker FPS:</small>
+                    <small>{{ worker[0] }} FPS:</small>
                     <code>{{ worker[1] }}</code>
                 </div>
             </div>

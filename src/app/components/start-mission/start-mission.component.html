@@ -1,7 +1,5 @@
 <app-modal
-    *ngIf="
-        missionStarted === false && (_simulatorService.missionSummary$ | async) as missionSummary
-    "
+    *ngIf="missionStarted === false && (simulatorService.missionSummary$ | async) as missionSummary"
 >
     <div class="flex-col container">
         <h1>Welcome to (not) Rocket Lab Launches! (alpha {{ appVersion }})</h1>

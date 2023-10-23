@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { WorkerId } from './perf-stats.model';
+import { WorkerId } from './perf-stats.service.model';
 
 @Injectable({
     providedIn: 'root',
@@ -24,7 +24,7 @@ export class PerfStatsService {
         return this._workerFps.asObservable();
     }
 
-    public setWorkerFps(workerId: WorkerId, fps: number) {
+    public updateWorkerFps(workerId: WorkerId, fps: number) {
         const workerFps = this._workerFps.value;
         workerFps[workerId] = fps;
         this._workerFps.next(workerFps);
