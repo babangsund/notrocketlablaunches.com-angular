@@ -12,7 +12,9 @@ import {
     StopMissionEvent,
     UpdateMissionEvent,
     UpdateMissionPlaybackSpeedEvent,
+    UpdateSubscriberEvent,
 } from 'src/app/workers/simulator/simulator.worker.model';
+import { WorkerId } from '../perf-stats/perf-stats.service.model';
 
 @Injectable({
     providedIn: 'root',
@@ -108,20 +110,30 @@ export class SimulatorService {
         } satisfies UpdateMissionPlaybackSpeedEvent);
     }
 
-    public startOffscreenCanvasWorker({
-        workerId,
+    public updateSubscriber(workerId: WorkerId, hz: number): void {
+        this._worker.postMessage({
+            type: 'update-subscriber',
+            id: workerId,
+            hz,
+        } satisfies UpdateSubscriberEvent);
+    }
+
+    public addSubscriber({
         hz,
+        unit,
         canvas,
         worker,
-        properties,
-        telemetryColors,
+        workerId,
+        colors = {},
+        missionDataProperties = [],
     }: {
         hz: number;
+        unit?: string;
         worker: Worker;
-        workerId: string;
+        workerId: WorkerId;
         canvas: HTMLCanvasElement;
-        properties: MissionDataProperty[];
-        telemetryColors: Record<string, string>;
+        missionDataProperties?: MissionDataProperty[];
+        colors?: Record<MissionDataProperty, string>;
     }): void {
         this._perfStatsService.addWorker();
 
@@ -132,10 +144,11 @@ export class SimulatorService {
         worker.postMessage(
             {
                 type: 'start',
-                dpr: window.devicePixelRatio,
-                port: channel.port2,
+                unit,
+                colors,
                 offscreenCanvas,
-                telemetryColors,
+                port: channel.port2,
+                dpr: window.devicePixelRatio,
             },
             [channel.port2, offscreenCanvas]
         );
@@ -149,11 +162,11 @@ export class SimulatorService {
         // Pass port to simulator
         this._worker.postMessage(
             {
-                id: workerId,
                 type: 'add-subscriber',
                 hz,
-                properties,
+                id: workerId,
                 port: channel.port1,
+                missionDataProperties,
             } satisfies AddSubscriberEvent,
             [channel.port1]
         );

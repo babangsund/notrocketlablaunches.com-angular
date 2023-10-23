@@ -1,12 +1,67 @@
 <app-timeline2d></app-timeline2d>
 <div class="grid">
     <div>globe3d here</div>
-    <div>altitude chart here</div>
-    <div>velocity chart here</div>
-    <div>throttle chart here</div>
-    <div>acceleration chart here</div>
-    <div>aero pressure chart here</div>
-    <div>eng. thrust chart here</div>
-    <div>eng. pressure chart here</div>
-    <div>propellant mass chart here</div>
+    <app-line-chart2d
+        [unit]="' km'"
+        [title]="'Altitude'"
+        [missionDataProperties]="['S1Altitude', 'S2Altitude']"
+    ></app-line-chart2d>
+    <app-line-chart2d
+        [unit]="' km/h'"
+        [title]="'Velocity'"
+        [missionDataProperties]="['S1Velocity', 'S2Velocity']"
+    ></app-line-chart2d>
+    <app-line-chart2d
+        [unit]="'%'"
+        [title]="'Throttle'"
+        [missionDataProperties]="['S1Throttle', 'S2Throttle']"
+    ></app-line-chart2d>
+    <app-line-chart2d
+        [unit]="' m/s²'"
+        [title]="'Acceleration'"
+        [missionDataProperties]="['S1Acceleration', 'S2Acceleration']"
+    ></app-line-chart2d>
+    <app-line-chart2d
+        [unit]="' kPa'"
+        [title]="'Aerodynamic Pressure'"
+        [missionDataProperties]="['S1AerodynamicPressure', 'S2AerodynamicPressure']"
+    ></app-line-chart2d>
+    <app-line-chart2d
+        [unit]="' kN'"
+        [title]="'Engine Thrust'"
+        [missionDataProperties]="[
+            'S1Engine1Thrust',
+            'S1Engine2Thrust',
+            'S1Engine3Thrust',
+            'S1Engine4Thrust',
+            'S1Engine5Thrust',
+            'S1Engine6Thrust',
+            'S1Engine7Thrust',
+            'S1Engine8Thrust',
+            'S1Engine9Thrust',
+            'S2Engine1Thrust'
+        ]"
+    ></app-line-chart2d>
+    <app-line-chart2d
+        [unit]="' kPa'"
+        [title]="'Engine Pressure'"
+        [missionDataProperties]="[
+            'S1Engine1CCPressure',
+            'S1Engine2CCPressure',
+            'S1Engine3CCPressure',
+            'S1Engine4CCPressure',
+            'S1Engine5CCPressure',
+            'S1Engine6CCPressure',
+            'S1Engine7CCPressure',
+            'S1Engine8CCPressure',
+            'S1Engine9CCPressure',
+            'S2Engine1CCPressure'
+        ]"
+    ></app-line-chart2d>
+    <app-line-chart2d
+        [unit]="' kg'"
+        [title]="'Propellant Mass'"
+        [missionDataProperties]="['S1RP1Mass', 'S1LOXMass', 'S2RP1Mass', 'S2LOXMass']"
+    >
+    </app-line-chart2d>
 </div>

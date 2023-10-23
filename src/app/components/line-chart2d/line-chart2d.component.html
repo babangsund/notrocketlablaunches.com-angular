@@ -1,0 +1,28 @@
+<header>
+    <h3>{{ title }}</h3>
+    <span *ngIf="(perfStatsService.showPerfStats$ | async) === true" class="fps"
+        >FPS: {{ fps$ | async }}</span
+    >
+</header>
+
+<main>
+    <canvas
+        appSimulatorSubscriber
+        [id]="id"
+        [hz]="hz"
+        [unit]="unit"
+        [worker]="worker"
+        [colors]="colors"
+        [missionDataProperties]="missionDataProperties"
+    ></canvas>
+</main>
+
+<footer class="footer">
+    <div class="legend">
+        <small *ngFor="let item of legend" class="legend-item">
+            <div class="legend-tag" [style]="'background-color:' + item.color"></div>
+            <span class="legend-text">{{ item.label }}</span>
+        </small>
+    </div>
+    <app-select-hz [hz]="hz" (changeHz)="handleChangeHz($event)"></app-select-hz>
+</footer>

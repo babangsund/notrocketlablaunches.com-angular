@@ -1,42 +1,28 @@
 import { CommonModule } from '@angular/common';
-import {
-    AfterViewInit,
-    Component,
-    ElementRef,
-    HostBinding,
-    OnDestroy,
-    Renderer2,
-    ViewChild,
-} from '@angular/core';
-import { SimulatorService } from 'src/app/services/simulator/simulator.service';
-import { createResizeObserver } from 'src/app/utils/createResizeListener';
+import { Component, HostBinding } from '@angular/core';
+import { DEFAULT_DATA_DISPLAY_HZ } from 'src/app/constants';
+import { SimulatorSubscriberDirective } from 'src/app/directives/simulator-subscriber/simulator-subscriber.directive';
 
 @Component({
     selector: 'app-timeline2d',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, SimulatorSubscriberDirective],
     templateUrl: './timeline2d.component.html',
     styleUrls: ['./timeline2d.component.scss'],
 })
-export class Timeline2dComponent implements AfterViewInit, OnDestroy {
-    public constructor(
-        private readonly _simulatorService: SimulatorService,
-        private readonly _hostElement: ElementRef,
-        private readonly _renderer: Renderer2
-    ) {
-        this._worker = new Worker(
+export class Timeline2dComponent {
+    public constructor() {
+        this.worker = new Worker(
             new URL('../../workers/timeline2d/timeline2d.worker', import.meta.url),
             { type: 'module' }
         );
     }
 
-    public static id = 'Timeline2D';
+    public readonly id = 'Timeline2D';
 
-    public static hz = 50;
+    public readonly hz = DEFAULT_DATA_DISPLAY_HZ;
 
-    private readonly _worker: Worker;
-
-    private readonly _unsubscribe: VoidFunction[] = [];
+    public readonly worker: Worker;
 
     @HostBinding('attr.role')
     public get role(): string {
@@ -46,52 +32,5 @@ export class Timeline2dComponent implements AfterViewInit, OnDestroy {
     @HostBinding('attr.aria-label')
     public get 'aria-label'(): string {
         return 'Timeline 2D';
-    }
-
-    @ViewChild('canvas')
-    private readonly _canvas: ElementRef<HTMLCanvasElement> | undefined;
-
-    public ngAfterViewInit(): void {
-        const canvas = this._canvas?.nativeElement;
-        if (canvas !== undefined) {
-            const dpr = window.devicePixelRatio;
-
-            const boundingBox = canvas.getBoundingClientRect();
-            const width = boundingBox.width;
-            const height = boundingBox.height;
-
-            this._renderer.setAttribute(canvas, 'width', String(width * dpr));
-            this._renderer.setAttribute(canvas, 'height', String(height * dpr));
-
-            this._simulatorService.startOffscreenCanvasWorker({
-                canvas,
-                properties: [],
-                telemetryColors: {},
-                hz: Timeline2dComponent.hz,
-                worker: this._worker,
-                workerId: Timeline2dComponent.id,
-            });
-
-            this._startResizeListener();
-        }
-    }
-
-    public ngOnDestroy(): void {
-        this._unsubscribe.forEach((u) => u());
-    }
-
-    private _startResizeListener(): void {
-        const canvas = this._hostElement.nativeElement;
-        if (canvas) {
-            const resizeObserver = createResizeObserver(canvas, ({ width, height }) => {
-                const dpr = window.devicePixelRatio;
-                this._worker.postMessage({
-                    type: 'resize',
-                    width: width * dpr,
-                    height: height * dpr,
-                });
-            });
-            this._unsubscribe.push(() => resizeObserver?.disconnect);
-        }
     }
 }

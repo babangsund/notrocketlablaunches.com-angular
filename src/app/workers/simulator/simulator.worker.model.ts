@@ -11,9 +11,9 @@ export interface Subscriber {
     id: string;
     hz: number;
     port: MessagePort;
-    interval: ReturnType<typeof setInterval>;
-    properties: string[];
     batchedData: BatchedData;
+    interval: ReturnType<typeof setInterval>;
+    missionDataProperties: MissionDataProperty[];
 }
 
 export interface UpdateMissionEvent {
@@ -39,7 +39,7 @@ export interface AddSubscriberEvent {
     id: string;
     port: MessagePort;
     hz: number;
-    properties: MissionDataProperty[];
+    missionDataProperties: MissionDataProperty[];
 }
 
 export interface UpdateSubscriberEvent {
@@ -90,7 +90,7 @@ export interface InitialDataEvent {
     /**
      * All data produced up until this point in time.
      */
-    initialData: BatchedData;
+    missionData: BatchedData;
 }
 
 export interface BatchedDataEvent {
@@ -99,7 +99,7 @@ export interface BatchedDataEvent {
     /**
      * New data since the last batched-data event.
      */
-    batchedData: BatchedData;
+    missionData: BatchedData;
 }
 
 export type FromSimulatorToSubscriberEvent = InitialDataEvent | BatchedDataEvent;

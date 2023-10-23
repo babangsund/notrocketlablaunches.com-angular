@@ -8,11 +8,9 @@ const timeline2d = new Timeline2d();
 
 startReportingWorkerFps(timeline2d.updateFps);
 
-addEventListener('message', (evt) => {
-    void onEvent(evt);
-});
+addEventListener('message', onEvent);
 
-async function onEvent(evt: MessageEvent<Timeline2dWorkerEvent>): Promise<void> {
+function onEvent(evt: MessageEvent<Timeline2dWorkerEvent>): void {
     switch (evt.data.type) {
         case 'start':
             timeline2d.start(evt.data);

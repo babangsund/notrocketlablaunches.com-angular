@@ -14,78 +14,111 @@ import {
 type Timeout = ReturnType<typeof setInterval>;
 
 export class Simulator {
+    /**
+     * Assigned mission. Source of truth for all data.
+     *
+     * @private
+     */
     private _mission: null | Mission = null;
     /**
      * Seconds since mission started.
+     *
+     * @private
      */
     private _missionTimeSec = 0;
     /**
      * Millisecond timestamp for when the mission was started. Useful for determining current "absolute" mission time in Ms.
+     *
+     * @private
      */
     private _missionStartTimeMs: number | null = null;
     /**
      * The nodejs interval to be cleared if the mission is paused.
+     *
+     * @private
      */
     private _missionInterval: Timeout | null = null;
     /**
      * When updateMission is called, startMission is blocked by the promise.
      * This is primarily because updateMission needs to fetch (import) the missionData
+     *
+     * @private
      */
     private _updateMissionPromise: null | Promise<void> = null;
     /**
-     * All interpolated data is persisted in dataLakes as a source of truth.
+     * All interpolated data is persisted in dataLakes as a source of truth for generated data.
      * Existing data is emitted to subscribers from the dataLake when they connect,
      * and newly generated data is then pushed in batches.
+     *
+     * @private
      */
     private _dataLake: Partial<Record<MissionDataProperty, number[]>> = {};
     /**
      * The subscribers for a given telemetry property.
      * A subscriber will also hold a reference to an entry in this list.
+     *
+     * @private
      */
     private _subscriberPool: Partial<Record<MissionDataProperty, number[][]>> = {};
     /**
      * Current index of missionData for each telemetry property.
+     *
+     * @private
      */
     private _checkpointIndexMap: Partial<Record<MissionDataProperty, number>> = {};
     /**
      * All the available data for interpolation.
+     *
+     * @private
      */
     private _missionData: Partial<MissionData> = {};
     /**
      * New property subscribers are processed every cycle.
+     *
+     * @private
      */
     private readonly _addSubscriberEventQueue: AddSubscriberEvent[] = [];
     /**
      * Subscriber to one or more properties (telemetry).
      * Interval is responsible for sending to port and then draining batchedData.
+     *
+     * @private
      */
     private readonly _subscribers = new Map<string, Subscriber>();
     /**
      * A multiplier for the timeStep. Determines how quickly the mission progresses.
+     *
+     * @private
      */
     private _missionPlaybackSpeed = DEFAULT_MISSION_PLAYBACK_SPEED;
     /**
      * The rate at which mission time moves.
-     * /10 is 10x the speed
+     * 10 is 10x the speed
+     *
+     * @private
      */
     private _timeStep = 1 / (TELEMETRY_SOURCE_RATE_HZ / this._missionPlaybackSpeed);
     /**
      * Is the mission currently running?
+     *
+     * @private
      */
     private _isMissionRunning = false;
     /**
      * Did the mission reach the last event?
+     *
+     * @private
      */
     private _isMissionComplete = false;
-
     /**
      * Set a mission. Fetches interpolation data.
      * Wraps internal _updateMission to prevent public APIs from being async when it isn't needed.
+     *
+     * @param missionId Id of the mission.
      */
     public updateMission(missionId: string): void {
         this._updateMissionPromise = this._updateMission(missionId);
     }
-
     /**
      * Starts mission timer and generates interpolated data between "checkpoints".
      */
@@ -103,7 +136,9 @@ export class Simulator {
             this._subscribers.set(sub.id, sub);
         });
     }
-
+    /**
+     * Stops (pauses) the current mission.
+     */
     public stopMission(): void {
         this._isMissionRunning = false;
         if (this._missionInterval) clearInterval(this._missionInterval);
@@ -112,22 +147,28 @@ export class Simulator {
             clearInterval(sub.interval);
         });
     }
-
+    /**
+     * Updates the mission playback speed.
+     *
+     * @param missionPlaybackSpeed New playback speed
+     */
     public updateMissionPlaybackSpeed(missionPlaybackSpeed: number): void {
         this._missionPlaybackSpeed = missionPlaybackSpeed;
         this._timeStep = 1 / (TELEMETRY_SOURCE_RATE_HZ / this._missionPlaybackSpeed);
         void this._startMission();
     }
-
     /**
      * Subscribes a new port to receive requested data in batches.
+     *
+     * @param evt `AddSubscriberEvent`
      */
     public addSubscriber(evt: AddSubscriberEvent): void {
         this._addSubscriberEventQueue.push(evt);
     }
-
     /**
      * Changes the rate at which subscribed ports receive data.
+     *
+     * @param evt `UpdateSubscriberEvent`
      */
     public updateSubscriber(evt: UpdateSubscriberEvent): void {
         const subscriber = this._subscribers.get(evt.id);
@@ -140,7 +181,12 @@ export class Simulator {
         subscriber.interval = this._startDataInterval(subscriber.port, batchedData, evt.hz);
         this._subscribers.set(subscriber.id, subscriber);
     }
-
+    /**
+     * Fetches a mission for the given `_missionId` and prepares the rendering loop values.
+     *
+     * @param _missionId Id of the mission
+     * @private
+     */
     private async _updateMission(_missionId: string): Promise<void> {
         const mission = await import(`../../data/missions/${_missionId}.json`);
         const missionData = mission.missionData;
@@ -175,7 +221,13 @@ export class Simulator {
             resolve();
         });
     }
-
+    /**
+     * Starts the mission simulation and updates telemetry data at a set frequency (100hz).
+     * If the mission completes, it stops the simulation and posts a mission-complete message.
+     *
+     * @returns A promise that resolves when the mission starts successfully.
+     * @private
+     */
     private async _startMission(): Promise<void> {
         if (this._updateMissionPromise) await this._updateMissionPromise;
         if (this._missionInterval) clearInterval(this._missionInterval);
@@ -216,7 +268,16 @@ export class Simulator {
             // i.e. Rocket is producing data at a 100hz rate
         }, 1000 / TELEMETRY_SOURCE_RATE_HZ);
     }
-
+    /**
+     * Handles the addition of a new subscriber for mission data.
+     *
+     * Upon receiving an event (`AddSubscriberEvent`), the method sends initial (e.g. any existing) mission data to the subscriber.
+     * It then creates a new data interval for the subscriber based on the specified frequency (hz).
+     * The subscriber is added to the pool of active subscribers for periodic updates.
+     *
+     * @private
+     * @param evt - The event object containing details about the subscriber and requested mission data.
+     */
     private _addSubscriber(evt: AddSubscriberEvent): void {
         // Send the existing produced data to this consumer.
         if (this._mission) {
@@ -227,17 +288,20 @@ export class Simulator {
                 missionSummary: this._mission.missionSummary,
                 missionStages: this._mission.missionStages,
                 missionEvents: this._mission.missionEvents,
-                initialData: evt.properties.reduce<BatchedData>((p, c) => {
+                missionData: evt.missionDataProperties.reduce<BatchedData>((p, c) => {
                     p[c] = this._dataLake[c] ?? [];
                     return p;
                 }, {}),
             } satisfies InitialDataEvent);
         }
 
-        const batchedData: BatchedData = evt.properties.reduce((p, c) => ({ ...p, [c]: [] }), {});
+        const batchedData: BatchedData = evt.missionDataProperties.reduce(
+            (p, c) => ({ ...p, [c]: [] }),
+            {}
+        );
 
         // Add a subscriber for each property of this chart
-        evt.properties.forEach((property) => {
+        evt.missionDataProperties.forEach((property) => {
             const data = batchedData[property];
             if (data) {
                 this._subscriberPool[property]?.push(data);
@@ -249,12 +313,17 @@ export class Simulator {
             batchedData,
             hz: evt.hz,
             port: evt.port,
-            properties: evt.properties,
+            missionDataProperties: evt.missionDataProperties,
             interval: this._startDataInterval(evt.port, batchedData, evt.hz),
         };
         this._subscribers.set(evt.id, subscriber);
     }
-
+    /**
+     * Processes the queue of pending `AddSubscriberEvent` requests.
+     * For each event in the queue, the method delegates the task of adding the subscriber to the `_addSubscriber` method.
+     *
+     * @private
+     */
     private _drainAddSubscriberEventQueue(): void {
         while (this._addSubscriberEventQueue.length) {
             const addSubscriberEvent = this._addSubscriberEventQueue.pop();
@@ -263,13 +332,21 @@ export class Simulator {
             }
         }
     }
-
+    /**
+     * Sends batched data to the port at given frequency (hz).
+     *
+     * @param port Message port for communication.
+     * @param batchedData List to drain of data at the given hz.
+     * @param hz Rate for posting data to the subscriber.
+     * @returns The interval.
+     * @private
+     */
     private _startDataInterval(port: MessagePort, batchedData: BatchedData, hz: number): Timeout {
         const intervalMs = 1000 / hz;
         const interval = setInterval(() => {
             port.postMessage({
                 type: 'batched-data',
-                batchedData,
+                missionData: batchedData,
                 missionTimeSec: this._missionTimeSec,
             } satisfies BatchedDataEvent);
             Object.values(batchedData).forEach((data) => {
@@ -281,13 +358,12 @@ export class Simulator {
 
         return interval;
     }
-
     /**
      * Interpolates a property against its current checkpoint.
      * Pushes produced data to all subscribers of the given property, and to the dataLake, which holds all values ever generated.
      *
      * @param nowMs Current time in milliseconds
-     * @returns void
+     * @private
      */
     private _makeTelemetryInterpolation(nowMs: number): (property: MissionDataProperty) => void {
         const interpolateProperty = (property: MissionDataProperty): void => {

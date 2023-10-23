@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+
 import { startReportingWorkerFps } from 'src/app/utils/startReportingWorkerFps';
 import { Simulator } from './Simulator';
 import {

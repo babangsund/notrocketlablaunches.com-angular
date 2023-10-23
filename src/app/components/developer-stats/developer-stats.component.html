@@ -15,7 +15,7 @@
             </div>
             <div *ngIf="perfStatsService.workerFps$ | async">
                 <div class="label-value" *ngFor="let worker of workerFpsEntries | async">
-                    <small>{{ worker[0] }} FPS:</small>
+                    <small>FPS {{ worker[0] }}:</small>
                     <code>{{ worker[1] }}</code>
                 </div>
             </div>
