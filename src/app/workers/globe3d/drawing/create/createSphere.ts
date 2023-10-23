@@ -145,7 +145,7 @@ const vsSource = `
         highp vec3 lightDirectionNormalized = normalize(uLightDirection);
         highp vec3 transformedNormal = normalize(mat3(uModelViewMatrix) * aVertexNormal);
         highp float dotProduct = max(dot(transformedNormal, lightDirectionNormalized), 0.0);
-        dotProduct = dotProduct * 2.0;  // Adjust the scaling of the dot product
-        vLighting = uAmbientLightIntensity + smoothstep(0.0, 1.0, dotProduct) * 2.0;  // Adjust the smoothstep values
+        dotProduct = dotProduct * 2.0;
+        vLighting = uAmbientLightIntensity + smoothstep(0.0, 1.0, dotProduct) * 2.0;
     }
 `;

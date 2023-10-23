@@ -1,6 +1,9 @@
 import { mat4 } from 'gl-matrix';
-import { MissionDataProperty } from 'src/app/data/data.model';
-import { FromSimulatorToSubscriberEvent } from '../simulator/simulator.worker.model';
+import { MissionDataProperty, MissionSummary } from 'src/app/data/data.model';
+import {
+    FromSimulatorToSubscriberEvent,
+    isInitialDataEvent,
+} from '../simulator/simulator.worker.model';
 import { BatchedData } from '../worker.model';
 import {
     GLOBE_3D_DEFAULT_LAT,
@@ -30,6 +33,12 @@ export class Globe3d {
      * @private
      */
     private readonly _storedData: BatchedData = {};
+    /**
+     * Summary of the current assigned mission.
+     *
+     * @private
+     */
+    private _missionSummary: MissionSummary | null = null;
     /**
      * Canvas for rendering the 3D globe.
      *
@@ -189,23 +198,24 @@ export class Globe3d {
      * @param evt Message event containing data for the globe.
      */
     private _onPortMessage(evt: MessageEvent<FromSimulatorToSubscriberEvent>): void {
-        const { _gl: gl } = this;
-        if (gl) {
-            Object.entries(evt.data.missionData).forEach(([key, data]) => {
-                if (!data) return;
+        Object.entries(evt.data.missionData).forEach(([key, data]) => {
+            if (!data) return;
 
-                const telemetryKey = key as MissionDataProperty;
-                if (!this._storedData[telemetryKey]) this._storedData[telemetryKey] = [];
+            if (isInitialDataEvent(evt)) {
+                this._missionSummary = evt.data.missionSummary;
+            }
 
-                if (['S2Altitude', 'S2Latitude', 'S2Longitude'].includes(telemetryKey)) {
-                    this._storedData[telemetryKey]?.push(...data);
-                } else {
-                    this._storedData[telemetryKey]?.push(...data);
-                }
-            });
+            const missionDataProperty = key as MissionDataProperty;
+            if (!this._storedData[missionDataProperty]) this._storedData[missionDataProperty] = [];
 
-            this._cancelAndRequestAnimationFrame(this._render);
-        }
+            if (['S2Altitude', 'S2Latitude', 'S2Longitude'].includes(missionDataProperty)) {
+                this._storedData[missionDataProperty]?.push(...data);
+            } else {
+                this._storedData[missionDataProperty]?.push(...data);
+            }
+        });
+
+        this._cancelAndRequestAnimationFrame(this._render);
     }
     /**
      * Main rendering function for the 3D globe and its data.
@@ -281,7 +291,13 @@ export class Globe3d {
             mat4.copy(modelViewMatrix, originalModelViewMatrix);
         }
 
-        renderSphere(gl, sphere, projectionMatrix, modelViewMatrix);
+        renderSphere(
+            gl,
+            sphere,
+            projectionMatrix,
+            modelViewMatrix,
+            this._missionSummary?.launchDateMs || Date.now()
+        );
         restoreViewState();
 
         const minAltitude = Math.min(...(S1PlannedAltitude ?? []), ...(S2PlannedAltitude ?? []));
@@ -425,7 +441,7 @@ export class Globe3d {
                 totalPairsProcessed += 1;
 
                 if (totalPairsProcessed % 50 === 0) {
-                    // Process every 10th pair
+                    // Process every 50th pair
                     results.push(batch[i], batch[i + 1]);
                 }
             }

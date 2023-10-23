@@ -20,13 +20,13 @@ export class DeveloperStatsComponent implements OnDestroy {
         );
         this.fpsCounter = new FpsCounter();
 
-        this._unsubscribe.push(this.fpsCounter.stop);
-        this._unsubscribe.push(
-            this.perfStatsService.showPerfStats$.subscribe((showPerfStats) => {
-                if (showPerfStats) this.fpsCounter.start();
-                else this.fpsCounter.stop();
-            }).unsubscribe
-        );
+        const fps$ = this.perfStatsService.showPerfStats$.subscribe((showPerfStats) => {
+            if (showPerfStats) this.fpsCounter.start();
+            else this.fpsCounter.stop();
+        });
+
+        this._unsubscribe.push(() => fps$.unsubscribe());
+        this._unsubscribe.push(() => this.fpsCounter.stop());
     }
 
     private readonly _unsubscribe: VoidFunction[] = [];

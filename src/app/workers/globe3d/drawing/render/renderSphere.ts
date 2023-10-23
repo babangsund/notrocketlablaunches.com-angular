@@ -3,7 +3,8 @@ import { type Sphere } from '../create/createSphere';
 import { degreesToRadians } from '../utils/degreesToRadians';
 
 /**
- * Renders a 3D sphere.
+ * Renders a 3D sphere with an earth texture on it.
+ * Adds lighting with a basic sun simulation.
  *
  * @param gl WebGLRenderingContext
  * @param sphere `Sphere`
@@ -14,7 +15,8 @@ export function renderSphere(
     gl: WebGLRenderingContext,
     sphere: Sphere,
     projectionMatrix: mat4,
-    modelViewMatrix: mat4
+    modelViewMatrix: mat4,
+    sunPositionTimeMs: number
 ): void {
     const { sphereData, sphereShader, sphereBuffers, sphereTexture } = sphere;
 
@@ -41,23 +43,11 @@ export function renderSphere(
     gl.vertexAttribPointer(sphereShader.attribLocations.vertexNormal, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(sphereShader.attribLocations.vertexNormal);
 
-    // Offset because of texture alignment
+    // Offset 180deg to account for texture alignment
     mat4.rotateY(modelViewMatrix, modelViewMatrix, degreesToRadians(180));
 
-    // Get basic position of the sun based on time of day
-    const directionalOffset = 4;
-    const minutesInAnHour = 60;
-    const minutesInADay = 1440;
-    const date = new Date(1679006280000); // 1679006280000 < launch time
-    const minutesPassedToday =
-        (date.getHours() - directionalOffset) * minutesInAnHour + date.getMinutes();
-
-    const zOffset = minutesInADay;
-    const x = 1 * Math.cos((2 * Math.PI * minutesPassedToday) / minutesInADay);
-    const z = 1 * Math.sin((2 * Math.PI * minutesPassedToday - zOffset) / minutesInADay);
-
     // Create a vector for the light direction in world space.
-    const lightDirectionWorld = vec3.fromValues(x, 0, z);
+    const lightDirectionWorld = getSunPosition(sunPositionTimeMs);
     // Normalize the light direction (important for accurate lighting calculations).
     vec3.normalize(lightDirectionWorld, lightDirectionWorld);
 
@@ -84,7 +74,29 @@ export function renderSphere(
     gl.drawElements(gl.TRIANGLES, sphereData.indices.length, gl.UNSIGNED_SHORT, 0);
 }
 
-// Degree coordinates for derbugging.
+/**
+ * Gets a very basic position of the sun based on minutes passed on a given day.
+ *
+ * @param sunPositionTimeMs Time of day.
+ * @returns vec3
+ */
+function getSunPosition(sunPositionTimeMs: number): vec3 {
+    // Get basic position of the sun based on time of day
+    const directionalOffset = 4;
+    const minutesInAnHour = 60;
+    const minutesInADay = 1440;
+    const date = new Date(sunPositionTimeMs);
+    const minutesPassedToday =
+        (date.getHours() - directionalOffset) * minutesInAnHour + date.getMinutes();
+
+    const zOffset = minutesInADay;
+    const x = 1 * Math.cos((2 * Math.PI * minutesPassedToday) / minutesInADay);
+    const z = 1 * Math.sin((2 * Math.PI * minutesPassedToday - zOffset) / minutesInADay);
+
+    return vec3.fromValues(x, 0, z);
+}
+
+// Degree coordinates for debugging.
 
 // Home
 // const lat = 0;

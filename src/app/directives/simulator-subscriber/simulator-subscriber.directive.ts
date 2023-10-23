@@ -72,7 +72,7 @@ export class SimulatorSubscriberDirective implements AfterViewInit, OnDestroy {
                 });
             });
 
-            this._unsubscribe.push(resizeObserver?.disconnect);
+            this._unsubscribe.push(() => resizeObserver?.disconnect());
         }
     }
 }

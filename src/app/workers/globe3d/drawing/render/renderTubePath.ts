@@ -17,6 +17,7 @@ import { latLonToCartesian } from '../utils/latLonToCartesian';
  * @param alpha The alpha value for the tube path rendering. Defaults to '0.3'.
  */
 export function renderTubePath(
+    // BBA TODO: This input could use some work. In Angular world this would ideally be a class anyway.
     gl: WebGLRenderingContext,
     projectionMatrix: mat4,
     modelViewMatrix: mat4,

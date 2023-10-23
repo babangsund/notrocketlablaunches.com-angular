@@ -1,6 +1,6 @@
 import { THEME_COLOR } from 'src/app/constants';
 import { MissionDataProperty, MissionEvents } from 'src/app/data/data.model';
-import { loadFontFaceSet } from 'src/app/utils/loadFontFaceSet';
+import { AVAILABLE_FONTS, Font } from 'src/app/utils/loadFontFaceSet';
 import {
     FromSimulatorToSubscriberEvent,
     isInitialDataEvent,
@@ -17,11 +17,9 @@ interface MissionEventsSegment {
 
 export class Timeline2d {
     /**
-     * Loads the font face set.
-     * The promise is used to block rendering until fonts are ready.
-     * @private
+     * Required fonts for this class.
      */
-    private static readonly _fontFaceSet = loadFontFaceSet(self.fonts, ['colfax', 'blenderpro']);
+    public static readonly fonts: Font[] = [AVAILABLE_FONTS.colfax, AVAILABLE_FONTS.blenderpro];
     /**
      * FPS of the environment. Used for animating over time (tweening).
      * @private
@@ -127,9 +125,7 @@ export class Timeline2d {
      * @param evt.offscreenCanvas Canvas for rendering the timeline.
      * @private
      */
-    private async _start({ dpr, port, offscreenCanvas }: StartEvent): Promise<void> {
-        await Timeline2d._fontFaceSet;
-
+    private _start({ dpr, port, offscreenCanvas }: StartEvent): void {
         const ctx = offscreenCanvas?.getContext('2d');
         this._ctx = ctx;
         this._dpr = dpr;
@@ -273,7 +269,7 @@ export class Timeline2d {
                 )
             );
 
-            ctx.fillStyle = THEME_COLOR; // Replace 'blue' with your theme color
+            ctx.fillStyle = THEME_COLOR;
             const passedLineHeight = timelineHeight * passedTimeInPercent;
             ctx.fillRect(
                 lineCenter,

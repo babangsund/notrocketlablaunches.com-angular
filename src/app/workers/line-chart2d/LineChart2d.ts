@@ -1,5 +1,5 @@
 import { MissionDataProperty } from 'src/app/data/data.model';
-import { loadFontFaceSet } from 'src/app/utils/loadFontFaceSet';
+import { AVAILABLE_FONTS, Font } from 'src/app/utils/loadFontFaceSet';
 import { FromSimulatorToSubscriberEvent } from '../simulator/simulator.worker.model';
 import { ResizeEvent, StartEvent } from '../timeline2d/timeline2d.worker.model';
 import { BatchedData } from '../worker.model';
@@ -9,12 +9,9 @@ import { getPrettyMinMaxY } from './drawing/drawYAxis';
 
 export class LineChart2d {
     /**
-     * Loads the font face set.
-     * The promise is used to block rendering until fonts are ready.
-     *
-     * @private
+     * Required fonts for this class.
      */
-    private static readonly _fontFaceSet = loadFontFaceSet(self.fonts, ['colfax']);
+    public static readonly fonts: Font[] = [AVAILABLE_FONTS.colfax];
     /**
      * Canvas for rendering the line chart.
      *
@@ -96,7 +93,7 @@ export class LineChart2d {
      */
     private _canvasHeight = 0;
     /**
-     * Initializes the line chart with given parameters.
+     * Starts the line chart visualization.
      *
      * @param evt The event object.
      * @param evt.port Message port for communication.
@@ -104,43 +101,8 @@ export class LineChart2d {
      * @param evt.unit Unit of the Y-axis.
      * @param evt.colors Color map for each mission data property.
      * @param evt.offscreenCanvas Canvas for rendering the line chart.
-     * @private
      */
-    public start(evt: StartEvent): void {
-        void this._start(evt);
-    }
-    /**
-     * Handles resizing of the line chart.
-     *
-     * @param evt The event object.
-     * @param evt.width Width of the canvas
-     * @param evt.height Height of the canvas
-     * @private
-     */
-    public resize(evt: ResizeEvent): void {
-        if (this._offscreenCanvas) {
-            this._offscreenCanvas.width = evt.width;
-            this._offscreenCanvas.height = evt.height;
-            this._ctx = this._offscreenCanvas?.getContext('2d');
-            const ctx = this._ctx;
-            if (!ctx) return;
-            this._updateScaleAndDimensions();
-        }
-    }
-    /**
-     * Internal method to start the line chart visualization.
-     *
-     * @param evt The event object.
-     * @param evt.port Message port for communication.
-     * @param evt.dpr Device pixel ratio.
-     * @param evt.unit Unit of the Y-axis.
-     * @param evt.colors Color map for each mission data property.
-     * @param evt.offscreenCanvas Canvas for rendering the line chart.
-     * @private
-     */
-    private async _start({ dpr, port, unit, colors, offscreenCanvas }: StartEvent): Promise<void> {
-        await LineChart2d._fontFaceSet;
-
+    public start({ dpr, port, unit, colors, offscreenCanvas }: StartEvent): void {
         const ctx = offscreenCanvas?.getContext('2d');
         this._ctx = ctx;
         this._dpr = dpr;
@@ -154,6 +116,24 @@ export class LineChart2d {
         }
     }
     /**
+     * Handles resizing of the line chart.
+     *
+     * @param evt The event object.
+     * @param evt.width Width of the canvas
+     * @param evt.height Height of the canvas
+     * @private
+     */
+    public resize({ width, height }: ResizeEvent): void {
+        if (this._offscreenCanvas) {
+            this._offscreenCanvas.width = width;
+            this._offscreenCanvas.height = height;
+            this._ctx = this._offscreenCanvas?.getContext('2d');
+            const ctx = this._ctx;
+            if (!ctx) return;
+            this._updateScaleAndDimensions();
+        }
+    }
+    /**
      * Handles messages received on the port and updates the chart with new data.
      *
      * @param evt Message event containing data for the line chart.
@@ -161,13 +141,13 @@ export class LineChart2d {
      */
     private _onPortMessage(evt: MessageEvent<FromSimulatorToSubscriberEvent>): void {
         Object.entries(evt.data.missionData).forEach(([key, data]) => {
-            if (data) {
-                const missionDataProperty = key as MissionDataProperty;
-                if (!this._storedData[missionDataProperty]) {
-                    this._storedData[missionDataProperty] = [];
-                }
-                this._storedData[missionDataProperty]?.push(...data);
+            if (!data) return;
+
+            const missionDataProperty = key as MissionDataProperty;
+            if (!this._storedData[missionDataProperty]) {
+                this._storedData[missionDataProperty] = [];
             }
+            this._storedData[missionDataProperty]?.push(...data);
         });
 
         const {

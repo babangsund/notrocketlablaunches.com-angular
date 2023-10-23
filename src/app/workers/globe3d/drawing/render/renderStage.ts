@@ -71,11 +71,7 @@ export function renderStage(
 }
 
 function convertAltitude(minAltitude: number, maxAltitude: number, altitude: number): number {
-    // Step 2: Normalize the altitude to a range of 0 to 1
     const normalizedAltitude = (altitude - minAltitude) / (maxAltitude - minAltitude);
-
-    // Step 3: Scale and shift the normalized value to the desired range of 1.03 to 1.1
     const scaledAltitude = 1 + normalizedAltitude * 0.15;
-
     return scaledAltitude;
 }

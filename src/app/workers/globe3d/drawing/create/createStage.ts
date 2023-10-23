@@ -102,7 +102,7 @@ const fsSource = `
   }
 `;
 
-// The sprite always faces the camera by using a technique known as "billboarding".
+// Uses billboarding to make the stage always face the camera
 const vsSource = `
     attribute vec4 aVertexPosition;
     attribute vec2 aTextureCoord;
@@ -113,10 +113,10 @@ const vsSource = `
     varying highp vec2 vTextureCoord;
 
     void main(void) {
-        // Extract the translation from the model-view matrix
+        // 1. Extract the translation from the model-view matrix
         vec4 translation = vec4(uModelViewMatrix[3].xyz, 1.0);
         
-        // Construct a new model-view matrix with no rotation
+        // 2. Construct a new model-view matrix with no rotation
         mat4 billboardModelViewMatrix = mat4(
             vec4(1.0, 0.0, 0.0, 0.0),
             vec4(0.0, 1.0, 0.0, 0.0),

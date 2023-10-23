@@ -141,7 +141,10 @@ export class Simulator {
      */
     public stopMission(): void {
         this._isMissionRunning = false;
-        if (this._missionInterval) clearInterval(this._missionInterval);
+        if (this._missionInterval) {
+            clearInterval(this._missionInterval);
+            this._missionInterval = null;
+        }
 
         this._subscribers.forEach((sub) => {
             clearInterval(sub.interval);
@@ -177,9 +180,11 @@ export class Simulator {
         const batchedData = subscriber.batchedData;
         clearInterval(subscriber.interval);
 
-        // Only transfer to worker at the desired rate
-        subscriber.interval = this._startDataInterval(subscriber.port, batchedData, evt.hz);
-        this._subscribers.set(subscriber.id, subscriber);
+        this._subscribers.set(subscriber.id, {
+            ...subscriber,
+            hz: evt.hz,
+            interval: this._startDataInterval(subscriber.port, batchedData, evt.hz),
+        });
     }
     /**
      * Fetches a mission for the given `_missionId` and prepares the rendering loop values.
@@ -230,8 +235,11 @@ export class Simulator {
      */
     private async _startMission(): Promise<void> {
         if (this._updateMissionPromise) await this._updateMissionPromise;
-        if (this._missionInterval) clearInterval(this._missionInterval);
         if (!this._missionStartTimeMs) this._missionStartTimeMs = Date.now();
+        if (this._missionInterval) {
+            clearInterval(this._missionInterval);
+            this._missionInterval = null;
+        }
 
         const telemetryKeys = Object.keys(this._checkpointIndexMap);
 
@@ -278,45 +286,44 @@ export class Simulator {
      * @private
      * @param evt - The event object containing details about the subscriber and requested mission data.
      */
-    private _addSubscriber(evt: AddSubscriberEvent): void {
+    private _addSubscriber({ id, hz, port, missionDataProperties }: AddSubscriberEvent): void {
         // Send the existing produced data to this consumer.
         if (this._mission) {
-            evt.port.postMessage({
+            port.postMessage({
                 type: 'initial-data',
                 missionTimeSec: this._missionTimeSec,
                 missionId: this._mission.missionId,
                 missionSummary: this._mission.missionSummary,
                 missionStages: this._mission.missionStages,
                 missionEvents: this._mission.missionEvents,
-                missionData: evt.missionDataProperties.reduce<BatchedData>((p, c) => {
+                missionData: missionDataProperties.reduce<BatchedData>((p, c) => {
                     p[c] = this._dataLake[c] ?? [];
                     return p;
                 }, {}),
             } satisfies InitialDataEvent);
         }
 
-        const batchedData: BatchedData = evt.missionDataProperties.reduce(
+        const batchedData: BatchedData = missionDataProperties.reduce(
             (p, c) => ({ ...p, [c]: [] }),
             {}
         );
 
         // Add a subscriber for each property of this chart
-        evt.missionDataProperties.forEach((property) => {
+        missionDataProperties.forEach((property) => {
             const data = batchedData[property];
             if (data) {
                 this._subscriberPool[property]?.push(data);
             }
         });
 
-        const subscriber = {
-            id: evt.id,
+        this._subscribers.set(id, {
+            id,
+            hz,
+            port,
             batchedData,
-            hz: evt.hz,
-            port: evt.port,
-            missionDataProperties: evt.missionDataProperties,
-            interval: this._startDataInterval(evt.port, batchedData, evt.hz),
-        };
-        this._subscribers.set(evt.id, subscriber);
+            missionDataProperties,
+            interval: this._startDataInterval(port, batchedData, hz),
+        });
     }
     /**
      * Processes the queue of pending `AddSubscriberEvent` requests.
